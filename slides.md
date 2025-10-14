@@ -12,7 +12,7 @@ Chapter 1
 
 ---
 
-# Why
+# What this book will help with
 
 - It helps design scalable, reliable, and maintainable software architectures.
 
@@ -21,7 +21,6 @@ Chapter 1
 - It provides a framework for evaluating technologies.
 
 Systems design is about tradeoffs. This book might help you figure out what are the core elements to consider in a design of a system.
-Quick round: what do you plan on getting out of this book?
 
 <!--
 why data intensive? as most applications today are limited by the complexity, amount and speed of change of data rather than CPU
