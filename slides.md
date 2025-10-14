@@ -65,7 +65,7 @@ Reliability is critical not only for nuclear power stations: outages cause lost 
 
 A system's ability to cope with increased load.
 
-it's not a boolean flag for a system that can be either scalable or not scalable, but more answering questions like "if the system grows in this specific way, how do we deal with the additional load". Also an architecture that can cope with a specific level of load, rarely will cope with 10x that load. An architecutre should be build around which operations will be common and which ones will be rare.
+it's not a boolean flag for a system that can be either scalable or not scalable, but more answering questions like "if the system grows in this specific way, how do we deal with the additional load". Also an architecture that can cope with a specific level of load, rarely will cope with 10x that load. An architecture should be build around which operations will be common and which ones will be rare.
 
 Load parameters can be very different from system to system: maybe it's simple RPS to a web server, % of cache hits or else, depending on what matters for the system.
 
