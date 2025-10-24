@@ -116,3 +116,11 @@ The majority of cost of a software is not the initial development, but its ongoi
 - How would our architecture behave if that load suddenly increased 10×?
 
 - What makes our systems easy or hard to evolve over time, and how could we design for better maintainability from the start?
+
+---
+src: ./pages/chapter-2-1.md
+---
+
+---
+src: ./pages/chapter-2-2.md
+---
