@@ -32,8 +32,3 @@ src: ./pages/chapter-2-1.md
 ---
 src: ./pages/chapter-2-2.md
 ---
-
----
-src: ./pages/chapter-2-3.md
----
-
