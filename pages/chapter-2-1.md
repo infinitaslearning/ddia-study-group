@@ -1,10 +1,4 @@
 
----
-
-# Chapter 2: Data Models and Query Languages
-
----
-
 ## Agenda - Full Hour Session
 
 ### Part 1: Presentation
@@ -21,7 +15,7 @@
 ## Why Data Models Matter
 
 > "Data models are perhaps the most important part of developing software, because they have such a profound effect on what the software above them can and can't do."
-> 
+>
 > — Martin Kleppmann
 
 ---
@@ -153,7 +147,7 @@ Application Code (OOP)          Relational Database
 }
 ```
 
-**Advantages**: 
+**Advantages**:
 - Better locality
 - Schema flexibility
 - Closer to application data structures
@@ -243,9 +237,9 @@ regions: id | name
 
 ## The Many-to-One Problem
 
-**Real example from the book**: 
-- LinkedIn profiles 
-- User lives in "Greater Seattle Area" 
+**Real example from the book**:
+- LinkedIn profiles
+- User lives in "Greater Seattle Area"
 - Should this be a string or an ID?
 
 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 20px;">
@@ -297,7 +291,7 @@ users ←→ user_skills ←→ skills
 
 **In relational databases**: Junction tables, straightforward
 
-**In document databases**: 
+**In document databases**:
 - Denormalize (data duplication, update anomalies)
 - Application-side joins (slow, complex)
 - Avoid the feature (limiting)
