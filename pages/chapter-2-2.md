@@ -439,5 +439,7 @@ There are a lot of other data models we didn't mention (e.g. genome data for sim
 
 - SQL vs NoSQL is always a hot topic. In ILPT I've the feeling we just opt-in for SQL by default, thoughts?
 - GraphDB, anyone ever used one? Opinions?
+- ORM: opinions? Do you prefer writing raw queries, or using an abstraction layer?
 - What's your experience in choosing data models for your applications? Do you think you ponderated enough on it, or do you feel it's often an afterthought?
+- Schema migration - how do you handle it in your projects?
 - A bit off-topic: opinions / experiences with other managed DBs, for example DynamoDB, CosmosDB?
