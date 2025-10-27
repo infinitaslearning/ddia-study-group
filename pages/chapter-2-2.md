@@ -36,6 +36,10 @@ But they are great also to represent a lot of heterogeneous data (Facebook uses 
     <img src="../assets/chapter02/graph-example.png" alt="graph data model example" style="width: 60%;"/>
 </div>
 
+<!--
+If a country have a different subdivision system (e.g. states, provinces, regions, ...), you can just add the relevant nodes and edges without changing any schema.
+-->
+
 ---
 
 ## Good properties
@@ -301,7 +305,7 @@ SELECT ?personName WHERE {
 
 <br>
 
-Mentioned in the book because even if useful only mentioned with semantic web, SPARQL is actually a very powerful language that can be used with any triple store.
+Mentioned in the book because even if usually only mentioned with semantic web, SPARQL is actually a very powerful language that can be used with any triple store.
 
 ---
 
@@ -435,4 +439,5 @@ There are a lot of other data models we didn't mention (e.g. genome data for sim
 
 - SQL vs NoSQL is always a hot topic. In ILPT I've the feeling we just opt-in for SQL by default, thoughts?
 - GraphDB, anyone ever used one? Opinions?
-- Opinions / experiences with other managed DBs, for example DynamoDB, CosmosDB?
+- What's your experience in choosing data models for your applications? Do you think you ponderated enough on it, or do you feel it's often an afterthought?
+- A bit off-topic: opinions / experiences with other managed DBs, for example DynamoDB, CosmosDB?
