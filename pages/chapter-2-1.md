@@ -208,7 +208,7 @@ Relational handles all relationship types naturally. One-to-many, many-to-many w
 ## Schema Flexibility & Evolution
 
 <div v-click>
-<p>
+
 **Schema-on-read** (Document):
 ```javascript
 // No migration needed
@@ -218,11 +218,10 @@ if (user.full_name) {
   return user.first_name + " " + user.last_name;
 }
 ```
-</p>
 </div>
 
 <div v-click>
-<p>
+
 **Schema-on-write** (Relational):
 ```sql
 -- Migration required
@@ -230,13 +229,11 @@ ALTER TABLE users ADD COLUMN full_name TEXT;
 UPDATE users SET full_name = first_name || ' ' || last_name;
 ALTER TABLE users DROP COLUMN first_name, DROP COLUMN last_name;
 ```
-</p>
 </div>
 
 <div v-click>
-<p>
+
 **Reality**: Schema-on-read ≠ schemaless! Still need versioning in code
-</p>
 </div>
 
 <!--
