@@ -138,6 +138,16 @@ Solves the problem but you trade control for convenience.
 
 </div>
 
+<style>
+pre[class*='language-'],
+code[class*='language-'],
+div[class*='language-'] {
+    display: block !important;
+    line-height: 1.4 !important;
+    font-size: 0.9em !important;
+}
+</style>
+
 <!--
 So how do we solve the impedance mismatch? The book mention a couple of approaches:
 
@@ -153,21 +163,10 @@ In the end ORMs DO solve the repetitive mapping problem, but you trade control f
 
 **Document databases also comes with other advantages**:
 1. **Locality**: No JOINs needed to get full user information.
-2. **Matches code structure**: JSON to JavaScript objects, perfect fit.
 
 **The Catch**:
 This works great when you need the ENTIRE document. But if you only need the email field, you're still loading everything - positions, education, all of it. That wastes memory and bandwidth."
 -->
-
-<style>
-pre[class*='language-'],
-code[class*='language-'],
-div[class*='language-'] {
-    display: block !important;
-    line-height: 1.4 !important;
-    font-size: 0.9em !important;
-}
-</style>
 
 ---
 
@@ -289,11 +288,11 @@ Instead with schema-on-write gives guarantees the database enforces correctness.
 
 "But there's another trend happening at the same time - databases are converging!"
 
-**Relational databases adding document features**:
+**Relational databases moving closer to Document databases**:
 "PostgreSQL JSONB (since 2014): Store JSON alongside structured data. Index into JSON fields, query with operators. ACID + flexibility!"
 
-**Document → Relational**:
-"MongoDB 4.0 (2018): Multi-document ACID transactions! Also added $lookup for joins. Admitting relational features matter."
+**Document databases moving closer to relational databases**:
+"MongoDB 4.0 (2018): Multi-document transactions! Also added $lookup for joins. Admitting relational features matter."
 
 **The Future**:
 "So we have both trends: using multiple specialized databases AND each database becoming more versatile. Where does this lead? Maybe we'll choose databases less by data model and more by operational needs - availability, consistency, performance characteristics."
@@ -302,6 +301,8 @@ Instead with schema-on-write gives guarantees the database enforces correctness.
 ---
 
 # Part 2: Query Languages
+
+<img src="../assets/chapter02/imperative-query-languages-fading.jpg" style="display: block; margin: 2em auto 0; max-height: 400px; width: auto; max-width: 700px;"/>
 
 <!--
 "Now let's talk about HOW we get data out of these systems. This is just as important as how we store it."
