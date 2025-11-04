@@ -75,3 +75,169 @@ heap file
 ---
 
 # Data Cubes and Materialized Views
+
+---
+
+# How Data Lives and Breathes  
+### A story-driven summary of DDIA Chapter 3: Storage and Retrieval
+
+_A study group presentation by Alex & Simone_
+
+---
+
+## 🧠 Goal for Today
+- Understand how data **is stored, retrieved, and kept safe**
+- Tell a story, not read a chapter
+- Reflect: **how does this apply in our company?**
+- End with discussion
+
+🕒 Duration: 1h total
+
+---
+
+## 1️⃣ The Life of a Record
+**“Every record starts with a user action.”**
+
+- A click, a save, a form → data is born  
+- It must **survive crashes**, **be found quickly**, **scale safely**
+- Storage engines are like **ecosystems** where data grows and evolves
+
+> “A database is not a black box — it’s a living organism.”
+
+<img src="../assets/chapter03/baby.png" className="w-70 center m-auto">
+
+---
+
+<img src="../assets/chapter03/fighters.png" alt="funny “Choose your fighter: B-Tree vs LSM” video game poster" className="w-80 center m-auto">
+
+---
+
+## 2️⃣ Two Species of Storage Engines
+
+### 🌳 B-Tree  
+- Traditional SQL DBs (Postgres, MySQL)  
+- In-place updates on disk pages  
+- Great for **reads**, ok for **writes**
+
+### 🌊 LSM-Tree  
+- Log-structured merge trees (Cassandra, RocksDB)  
+- Write new data sequentially → merge later  
+- Great for **writes**, heavier **reads**
+
+> B-Tree = office filing cabinet  
+> LSM = inbox + periodic re-filing
+
+---
+
+## 3️⃣ Writing and Crashing
+
+- The **Write-Ahead Log (WAL)** keeps order  
+- Steps:
+  1. Append to log  
+  2. Update in-memory structure  
+  3. Flush to disk → commit  
+- If crash occurs → **replay the log**
+
+> “If I crash, you’ll remember me.” – The WAL
+
+<img src="../assets/chapter03/wal.png" alt="a tired database writing a diary with coffee, caption \“If I crash, you’ll remember me\”" className="w-80 center m-auto">
+
+
+---
+
+## 4️⃣ Compaction: Keeping Things Tidy
+
+- LSM merges old files into bigger sorted ones  
+- Frees space, improves lookup speed  
+- Trade-off: uses I/O and CPU  
+- Like doing **spring cleaning** for data
+
+
+<img src="../assets/chapter03/clean.png" alt="cartoon of a janitor sweeping away old SSTable files" className="w-80 center m-auto">
+
+
+---
+
+## 5️⃣ Reading Efficiently
+
+- Databases use **indexes** to find data fast  
+- Primary vs Secondary indexes  
+- Caches (page cache, memtable)  
+- Bloom filters to skip non-existent data  
+- Balancing act: **read vs write cost**
+
+> “Reading is easy — unless you wrote too fast.”
+
+<img src="../assets/chapter03/find.png" alt="image prompt: Sherlock Holmes searching for a key inside SSD stack" className="w-80 center m-auto">
+
+
+---
+
+## 6️⃣ Hardware Realities
+
+- Disk seeks are expensive  
+- SSDs are faster, but not magic  
+- Buffering and batching are heroes  
+- Sequential I/O > Random I/O  
+
+💡 Understanding storage helps design efficient APIs & services
+
+---
+
+## 7️⃣ Real-World Examples
+
+| System | Engine Type | Notes |
+|--------|--------------|-------|
+| PostgreSQL | B-Tree | WAL + pages |
+| MongoDB | WiredTiger (LSM-like) | Compaction heavy |
+| Cassandra | LSM | Optimized for writes |
+| RocksDB | LSM | Used inside many apps |
+
+> We use these patterns daily, even if we don’t notice.
+
+---
+
+## 8️⃣ Reflection: What about us?
+
+### Let’s look at our stack 👇
+
+| Concept | DDIA Advice | Our Reality |
+|----------|--------------|-------------|
+| Storage engine | Choose based on workload | ? |
+| Indexing | Keep hot paths indexed | ? |
+| WAL / durability | Always write before commit | ? |
+| Compaction / cleanup | Monitor I/O pressure | ? |
+
+<img src="../assets/chapter03/pipes.png" alt="image prompt: company logo with cartoon database boxes passing data along pipes" className="w-80 center m-auto">
+
+
+---
+
+## 9️⃣ Key Takeaways
+
+- Every system balances **durability, speed, and simplicity**
+- B-Trees and LSMs are not enemies — just **different survival strategies**
+- WAL is your best friend during crashes
+- Knowing storage internals helps build **better APIs and scalable services**
+
+<img src="../assets/chapter03/durable.png" alt="image prompt: meme of two database types shaking hands “Making data durable since the 1970s”" className="w-80 center m-auto">
+
+
+---
+
+## 1️⃣0️⃣ Discussion Time 💬
+**How data moves in *our* company**
+
+Prompts:
+- Which systems are more write-heavy vs read-heavy?
+- Any painful experiences with compaction, caching, or indexing?
+- Do we have visibility into our storage behavior?
+- How could DDIA concepts improve performance or reliability?
+
+---
+
+## 🙌 Thank You
+Let’s dive into discussion.  
+**What does “storage and retrieval” mean for *our* daily work?**
+
+---
