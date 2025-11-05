@@ -45,6 +45,10 @@ Chapter 3
 ## Storage and Retrieval
 
 ---
-src: ./pages/chapter-3.md
+src: ./pages/chapter-3-1.md
+---
+
+---
+src: ./pages/chapter-3-2.md
 ---
 <!-- Chapter 3 End -->
