@@ -202,15 +202,43 @@ Column compression allows more rows of column to fit on L1 cache. Bitwise operat
 
 # Sort Order in Column Storage
 
+Administrator should choose based on knowledge by which column to sort
+eg: 
+* we need most of the time last month data it make sense to have data sorted by date
+* we can use product as a second sort so rows with same product will be stored nearby and group or filter by product will be much faster than scanning all rows
+
+Sort have benefits on column compression because the sequence of zero are long and run-length encoding will efficiently compress down to few kilobytes
+
+This compression are strongest for the first sort key
+
+Having the first few column sorted is still a win overall
+
 
 
 ---
 
 # Writing to Column-Oriented Storage
 
+Writing aren't efficiently because we have to keep in sync all dimension file and if we add a row in the middle we have update all table files
+
+A solution here is to make the write happen in memory like in the LSM-trees
+Once a bulk of writes have been accumutaled they are merged with column file on disk and written to a new files in bulk 
+
+👆Vertica
+
 ---
 
-# Data Cubes and Materialized Views
+# Materialized Views and Data Cubes
+
+## Materialized Aggregates
+
+### COUNT, SUM, AVG,MIN or MAX
+why not cache some of the counts or sums that queries use most often?
+
+materialized view is such a cache.
+relationa data model -> **standard (virtual) view** -> results of some query
+
+materialized view is instead an actual copy of the query results, written to disk.
 
 ---
 
