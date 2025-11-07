@@ -83,25 +83,126 @@ each row on fact table is an event that occurs on a particular time
 
 It's a variation of the Start
 
-dimensions are broken into subdimensions 
+dimensions are broken into subdimensions
+<img src="../assets/chapter03/snowflake-schema.jpg" alt="Snowflake Schema" className="w-150 center m-auto">
 
-<!-- dim_product can have dim_brands and dim_category -->
+<!--
+dim_product can have dim_brands and dim_category
 
 typical data warehouse contains fact tables with easily over 100 columns
 
 dimension tables can be very wide too
+-->
 
 ---
 
 # Column-Oriented Storage
 
+imagine storing and querying trillions of rows
+
+dimension table are usually much smaller, like millions
+
+typical data warehouse contains fact tables with easily over 100 columns
+
+but usually queries access 4 or 5 of them. SELECT * queries are rarely used
+
+example
+
+every occurrence of someone buying fruit or candy during the 2024 calendar year
+
+how can we query efficiently?
+
+OLTP dbs store table in a row-oriented fashion.
+Every row are stored next to each other.
+We have index that tell the storage engine where to find the data but this force the engine to load all the rows from disk to memory then parse theme and filter out. That take a long time.
+
+column-oriented storage came in help
+
+don’t store all the values from one row together, but store all the values from each column together instead.
+If each column is stored in a separate file, a query only needs to read and parse those columns that are used in that query, which can save a lot of work
+
+---
+
+# Column-Oriented Storage
+
+
+<img src="../assets/chapter03/column-storage.png" alt="Column storage" className="w-150 center m-auto">
+
 ---
 
 # Column Compression
 
+Bitmap Encoding
+
+<v-switch>
+  <template #0><img src="../assets/chapter03/bitmap-encoding.png" alt="Bitmap Encoding" className="w-140 center m-auto"/></template>
+  <template #1><img  src="../assets/chapter03/bitmap-encoding-full.png" alt="Bitmap Encoding" className="w-140 center m-auto"/></template>  
+</v-switch>
+
+<!--
+The bit is 1 if the row has that value, and 0 if not.
+
+Often, the number of distinct values in a column is small compared to the number of
+row
+
+if n are small those bitmaps can be stored with one bit per row
+if n is bigger there will be a lot of 0 (sparse). Those values can additionally be run-length encoded
+
+WHERE product_sk IN (30, 68, 69):
+  Load the three bitmaps for product_sk = 30, product_sk = 68, and product_sk
+  = 69, and calculate the bitwise OR of the three bitmaps, which can be done very
+  efficiently.
+
+
+WHERE product_sk = 31 AND store_sk = 3:
+  Load the bitmaps for product_sk = 31 and store_sk = 3, and calculate the bit‐
+  wise AND. 
+
+
+This works because the columns contain the rows in the same order,
+  so the kth bit in one column’s bitmap corresponds to the same row as the kth bit
+  in another column’s bitmap.
+
+-->
+
+---
+
+# Column Compression
+
+
+```sql
+WHERE product_sk IN (30, 68, 69):
+```
+<v-click>
+  Load the three bitmaps for product_sk = 30, product_sk = 68, and product_sk
+  = 69, and calculate the <strong>bitwise OR</strong> of the three bitmaps, which can be done very
+  efficiently.
+</v-click>
+```sql
+WHERE product_sk = 31 AND store_sk = 3:
+```
+<v-click>
+  Load the bitmaps for product_sk = 31 and store_sk = 3, and calculate the <strong>bitwise AND</strong>. 
+</v-click>
+
+
+<v-click>
+<p>
+This works because the columns contain the rows in the <strong>same order</strong>, so the kth bit in one column’s bitmap corresponds to the same row as the kth bit in another column’s bitmap.
+  </p>
+</v-click>
+
+<!-- 
+column data can be splitted into chucks that fit in CPU L1 cache where CPU can iterate in a tight loop (without function call).
+This is much faster then running in code (because no function calls)
+Column compression allows more rows of column to fit on L1 cache. Bitwise operations can be designed to operate a such level, this is call VECTORIZED PROCESSING
+-->
+
 ---
 
 # Sort Order in Column Storage
+
+
 
 ---
 
