@@ -228,7 +228,7 @@ Once a bulk of writes have been accumutaled they are merged with column file on 
 
 ---
 
-# Materialized Views and Data Cubes
+# Materialized Views
 
 ## Materialized Aggregates
 
@@ -240,34 +240,20 @@ relationa data model -> **standard (virtual) view** -> results of some query
 
 materialized view is instead an actual copy of the query results, written to disk.
 
----
-
-## Real-World Examples
-
-| System | Engine Type | Notes |
-|--------|--------------|-------|
-| PostgreSQL | B-Tree | WAL + pages |
-| MongoDB | WiredTiger (LSM-like) | Compaction heavy |
-| Cassandra | LSM | Optimized for writes |
-| RocksDB | LSM | Used inside many apps |
-
-> We use these patterns daily, even if we don’t notice.
+When underlying data changes materialized view needs to be updated
 
 ---
 
-## Reflection: What about us?
+# Data Cubes
 
-### Let’s look at our stack 👇
+special case of mv is called **data cube**: a grid of aggregates grouped by different dimensions
 
-| Concept | DDIA Advice | Our Reality |
-|----------|--------------|-------------|
-| Storage engine | Choose based on workload | ? |
-| Indexing | Keep hot paths indexed | ? |
-| WAL / durability | Always write before commit | ? |
-| Compaction / cleanup | Monitor I/O pressure | ? |
+<img src="../assets/chapter03/data-cube.png" alt="Bitmap Encoding" className="w-180 center m-auto"/>
 
-<img src="../assets/chapter03/pipes.png" alt="image prompt: company logo with cartoon database boxes passing data along pipes" className="w-80 center m-auto">
-
+<!-- 
+imagine it with 5 different dimension
+certain queries become very fast because they are precomputed
+-->
 
 ---
 
@@ -281,19 +267,3 @@ materialized view is instead an actual copy of the query results, written to dis
 <img src="../assets/chapter03/durable.png" alt="image prompt: meme of two database types shaking hands “Making data durable since the 1970s”" className="w-80 center m-auto">
 
 
----
-
-## Discussion Time 💬
-**How data moves in *our* company**
-
-Prompts:
-- Which systems are more write-heavy vs read-heavy?
-- Any painful experiences with compaction, caching, or indexing?
-- Do we have visibility into our storage behavior?
-- How could DDIA concepts improve performance or reliability?
-
----
-
-## 🙌 Thank You
-Let’s dive into discussion.  
-**What does “storage and retrieval” mean for *our* daily work?**

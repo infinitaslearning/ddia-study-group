@@ -51,4 +51,8 @@ src: ./pages/chapter-3-1.md
 ---
 src: ./pages/chapter-3-2.md
 ---
+
+---
+src: ./pages/chapter-3-discussion.md
+---
 <!-- Chapter 3 End -->
