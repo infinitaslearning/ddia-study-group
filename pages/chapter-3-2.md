@@ -1,12 +1,95 @@
-# Transaction Processing 
+# Transaction Processing
+
+transaction: a group of reads and writes that form a logic unit
+
+Transaction processing: allowing clients to make low-latency reads and writes
+Batch processing: periodically run to process a batch, chapter 10
+OLTP
+<!--
+In early days of business a write to the database typically corresponded to a "commercial transaction": making a sales, placing an order
+the term stuck referring to a group of reads and writes that form a logic unit
+-->
 
 ---
 
 # Analytics Processing
 
+OLAP
+
+---
+
+# Comparing OLTP with OLAP
+
+| Property | **Transaction processing systems (OLTP)** | **Analytic systems (OLAP)** |
+|----------|---------------------------------------|-------------------------|
+| **Main read pattern** | Small number of records per query, fetched by key | Aggregate over large number of records |
+| **Main write pattern** | Random-access, low-latency writes from user input | Bulk import (ETL) or event stream |
+| **Primarily used by** | End user/customer, via web application | Internal analyst, for decision support |
+| **What data represents** | Latest state of data (current point in time) | History of events that happened over time |
+| **Dataset size** | Gigabytes to terabytes | Terabytes to petabytes |
+
+---
+
+# Data warehouse
+
+From 1990s companies started using a separate database to run analytics query
+
+ETL: **Extract–Transform–Load**
+
+<img src="../assets/chapter03/etl.png" alt="Extract–Transform–Load*" className="w-120 center m-auto">
+
+---
+
+# Divergences between OLTP databases and data warehouses
+
+both have sql query interface
+vendor focus on support one only type
+
+Vendor that support both in the same product but behind the scene they use separate storage and query engines
+* Microsoft SQL Server
+* SAP HANA 
+
+Teradata, Vertica SAP HANA and ParAccel: under expensive commercial licenses
+Amazon RedShift is a hosted version of ParAccel
+Apache Hive, Spark SQL, Cloudera Impala, Facebook Presto, Apache Tajo, and Apache Drill: OpenSource
+
+Some of them are based on Google's Dremel Research
+
 ---
 
 # Stars and Snowflakes
+
+Data warehouse require to handle different data models
+dimensional modeling
+
+---
+
+# ⭐ Star Schema
+
+<img src="../assets/chapter03/star.png" alt="Star Schema" className="w-100 center m-auto">
+
+<!--
+fact -> event
+dimensional -> who, what, where, when, how and why
+
+event date and time can using dimension table, this allow additional info like holidays
+
+each row on fact table is an event that occurs on a particular time
+-->
+
+---
+
+# ❄️ Snowflakes Schema
+
+It's a variation of the Start
+
+dimensions are broken into subdimensions 
+
+<!-- dim_product can have dim_brands and dim_category -->
+
+typical data warehouse contains fact tables with easily over 100 columns
+
+dimension tables can be very wide too
 
 ---
 
@@ -191,5 +274,3 @@ Prompts:
 ## 🙌 Thank You
 Let’s dive into discussion.  
 **What does “storage and retrieval” mean for *our* daily work?**
-
----
