@@ -32,6 +32,7 @@ src: ./pages/chapter-2-1.md
 ---
 src: ./pages/chapter-2-2.md
 ---
+
 <!-- Chapter 3 Start -->
 ---
 class: text-center
