@@ -61,6 +61,19 @@ Let's unpack these fundamental differences row by row.
 -->
 
 ---
+layout: image
+image: ../assets/chapter03/disaster-girl.png
+backgroundSize: contain
+---
+
+<!-- 
+MEME: Disaster Girl
+Top text: "WHEN YOU RUN ANALYTICS QUERIES"
+Bottom text: "ON YOUR PRODUCTION DATABASE"
+Image: https://imgflip.com/memegenerator/Disaster-Girl
+-->
+
+---
 
 # The Data Warehouse
 
@@ -141,6 +154,20 @@ Let's unpack these fundamental differences row by row.
 
 [click] The key takeaway: don't try to use one database for everything. OLTP and OLAP have fundamentally different needs. Even databases that claim to do both typically use separate engines under the hood. 
 For example Microsoft SQL Server and SAP HANA they both integrate OLTP and OLAP on the same product but with different storage and retrieval engine
+-->
+
+---
+layout: image
+image: ../assets/chapter03/hero-sweating.png
+backgroundSize: contain
+---
+
+<!-- 
+MEME: Two Buttons (Sweating Superhero)
+Button 1: "OPTIMIZE FOR WRITES"
+Button 2: "OPTIMIZE FOR READS"
+Caption below: "DATABASE ARCHITECTS"
+Image: https://imgflip.com/memegenerator/Two-Buttons
 -->
 
 ---
@@ -260,6 +287,20 @@ In practice, the star schema usually wins. Why? Storage is cheap, and the denorm
 -->
 
 ---
+layout: image
+image: ../assets/chapter03/pigeon.png
+backgroundSize: contain
+---
+
+<!-- 
+MEME: Is This A Pigeon?
+Person label: "DATABASE ARCHITECTS"
+Butterfly label: "MORE JOINS AND NORMALIZATION"
+Caption: "IS THIS BETTER PERFORMANCE?"
+Image: https://imgflip.com/memegenerator/Is-This-A-Pigeon
+-->
+
+---
 layout: statement
 ---
 
@@ -277,6 +318,21 @@ Query: "What's the average sale amount last quarter?"
 
 **Traditional approach:** Load everything, discard 99% 😱
 </v-click>
+
+---
+layout: image
+image: ../assets/chapter03/brain.png
+backgroundSize: contain
+---
+
+<!-- 
+MEME: Expanding Brain (4 levels)
+Level 1 (small brain): "LOAD ALL COLUMNS"
+Level 2 (normal brain): "PARSE ALL ROWS"
+Level 3 (glowing brain): "THROW AWAY 99%"
+Level 4 (exploding galaxy brain): "COLUMN STORAGE"
+Image: https://imgflip.com/memegenerator/Expanding-Brain
+-->
 
 <!--
 [click] Picture this: your fact table has grown to trillions of rows over several years. It has over 100 columns - product details, customer details, date details, various measures. An analyst wants to calculate the average sale amount for last quarter. That query only needs two columns: date (to filter to last quarter) and amount (to calculate the average). That's 2 out of 100+ columns.
@@ -425,6 +481,19 @@ Bitwise AND:     [1, 0, 0, 1, 0, 0, 1, 0, ...]
 -->
 
 ---
+layout: image
+image: ../assets/chapter03/bitwise-channel.png
+backgroundSize: contain
+---
+
+<!-- 
+MEME: Ancient Aliens (History Channel Guy)
+Top text: "BITWISE OPERATIONS"
+Image: https://imgflip.com/memegenerator/Ancient-Aliens
+(No bottom text needed - the meme speaks for itself)
+-->
+
+---
 clicks: 3
 ---
 
@@ -510,7 +579,18 @@ This hybrid approach gives you the best of both worlds. Writes are fast because 
 -->
 
 ---
-clicks: 3
+layout: image
+image: ../assets/chapter03/y-u-no.png
+backgroundSize: contain
+---
+
+<!-- 
+MEME: Y U No (Rage Face)
+Top text: "COLUMN STORAGE SO FAST FOR READS"
+Bottom text: "Y U NO FAST FOR WRITES?"
+Image: https://imgflip.com/memegenerator/Y-U-No
+-->
+
 ---
 
 # Materialized Views: Pre-Computing Results
@@ -568,30 +648,6 @@ Materialized views work best for frequently-run analytical queries where slightl
 -->
 
 ---
-clicks: 3
----
-
-# Data Cubes: Pre-Aggregated Everything
-
-<v-click at="1">
-
-## A Special Case of Materialized Views
-
-**Data Cube:** Pre-computed aggregates grouped by multiple dimensions
-
-**Example:** Sales cube with dimensions: Date × Product × Store
-- Each cell: total sales for that specific combination
-- "Sales of Product X in Store Y on Date Z" → instant lookup
-
-</v-click>
-
-<!--
-[click] A data cube is materialized views taken to the extreme. 
-
-In 2D it's a grid: rows are dates, columns are products, cells contain sales amounts. In 3D it's an actual cube: the X-axis is date, Y-axis is product, Z-axis is store. Each cell in the cube contains the sales total for that exact combination. "What were sales of Electronics in Store 5 on March 15th?" - that's a single cell lookup, essentially instant.
--->
-
----
 
 # Data Cubes
 
@@ -610,6 +666,19 @@ Imagine pre-computing not just "total sales by product" but "total sales by prod
 [click] This 2D visualization shows how aggregates are pre-computed along both dimensions. On top we have the product sku, on the left the date and the cells are the sum of net_price, the end columns and rows contain  totals
 
 [click] The 3D version extends this concept to three dimensions - each cell represents a unique combination of the three axes.
+-->
+
+---
+layout: image
+image: ../assets/chapter03/pre-computed.png
+backgroundSize: contain
+---
+
+<!-- 
+MEME: Yo Dawg (Xzibit)
+Top text: "YO DAWG I HEARD YOU LIKE PRE-COMPUTING"
+Bottom text: "SO I PRE-COMPUTED YOUR PRE-COMPUTED AGGREGATES"
+Image: https://imgflip.com/memegenerator/Yo-Dawg-Heard-You
 -->
 
 ---
