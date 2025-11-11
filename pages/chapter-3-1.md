@@ -8,13 +8,13 @@ On the most basic level a database does only two things:
 
 # Who cares about database engines?
 
-> Why should I care about databases engines and how they are made?
+> Why should I care about databases and how they are made?
 
-Because as developer you should know which database is more appropriate to your application requirements.
+Because as developer you should know which database is more fit to your application requirements.
 
 Every engine has his own strenghts and weaknesses, so it's important to make the right choice.
 
-For example some engines are optimized for analytics, some for transactional workloads, so you need to have a rough idea of what your database is doing under the hood.
+> For example some engines are optimized for analytics, some for transactional workloads, so you need to have a rough idea of what your database is doing under the hood.
 
 ---
 
@@ -69,7 +69,7 @@ append to file is fast
 
 ---
 
-# HOW CAN WE ACHIEVE FASTER READS?
+# How can we achieve faster reads?
 <br/>
 <br/>
 <img src="../assets/chapter03/c3-02.jpg" alt="database content" class="w-150 center m-auto"/>
@@ -85,7 +85,7 @@ Keep some additional metadata on the side which acts as signpost to quickly tloc
 
 ---
 
-# Hash Indexes
+# Hash Index
 
 An index is a derived data structure with some metadata that helps navigate through the database contents.
 
@@ -103,7 +103,7 @@ So when we need to access to the value of a key:
 
 ---
 
-# Hash Indexes
+# Hash Index
 
 - An index greatly improves the read performances
 - The cost is moved to the write operation, any time some data is written, you must update the index as well.
@@ -123,7 +123,7 @@ This might look simplistic, but it's a real viable approach (see Bitcask - the d
 
 ---
 
-# HOW CAN WE STOP WASTING DISK SPACE
+# How can we stop wasting disk space
 
 On the first implementation of our db:
 - when we udpate a record, we add a new line on the same key
@@ -135,7 +135,7 @@ It works but our disk space used only keeps growing with time; with a big enough
 
 ---
 
-# COMPACTION PROCEDURE
+# Compaction procedure
 
 We cycle through the whole storage file and remove "useless" rows (the one that get overwritten by new values on the same key).
 
@@ -153,7 +153,7 @@ To apply this to our store we need to:
 
 ---
 
-# COMPACTION PROCEDURE
+# Compaction procedure
 
 - Each segment must own his dedicated index table
 - Indexes must be re-calculated based on the new compacted file version
@@ -162,7 +162,7 @@ To apply this to our store we need to:
 <img src="../assets/chapter03/c3-05.jpg" alt="database content" class="w-100 center m-auto"/>
 <br/>
 
-## QUESTION TIME:
+## Question time:
 
 why should I split my store in segments and not just keep it unified instead?
 
@@ -197,7 +197,7 @@ CONCURRENCY CONTROL:
 
 ---
 
-# APPEND-ONLY STORAGE NOTES:
+# Append-only storage notes:
 
 Append-only store might seem wasteful at first glance but are actually pretty good for various reasons:
 
@@ -224,42 +224,237 @@ and your HELLO_KITTY consumption is slowed down by a good margin
 
 AKA Sorted String Table and Log-Structured Merge-Tree
 
-starting from the previous implementation we will sort the rows by key.
+starting from the previous implementation we will just sort the rows by key.
+
+<br/>
+<img src="../assets/chapter03/c3-06.png" alt="LSM" class="w-130 center m-auto"/>
+<br/>
+
+---
+
+# Advantages
 
 1. We no longer need an index of all keys in memory.
 > We still need an index file, but it include only some of the keys, not all.
 Just jump to the closest index and start searching from there.
+
+<br/>
 
 2. Merging segments together is simple and efficient
 > even if the files are bigger than available memory
 (just read the two segments together and take the lowest value every time
 if the same key appears twice, take it from the most recent segment)
 
+<br/>
+
 3. It is possible to group records into a block and compress them before writing them into disk.
 > less disk space used also means less I/O bandwidth usage, too
+
+
+NOTE: For various reasons it's much easier to maintain a SSTable on-memory (MEMTABLE) than doing so on disk.
+
+---
+
+# How to write and maintain SSTables
+
+There's the specific algorithm already defined for this, so we can skip the details
+
+https://en.wikipedia.org/wiki/Log-structured_merge-tree
+
+ADD A NEW ENTRY: 
+- add the new entry on memory (the memtable)
+- when the memtable grows too big, write it down into the disk
+
+READ AN ENTRY:
+- look for the key on the memtable
+- if not found, look on most recent disk segment
+- if not found, then keep looking into older segments
+
+FROM TIME TO TIME:
+- run merge and compaction in the background, to cleanup wasted space.
+
+
+---
+
+# What if Murphy's law strikes?
+...and it will...
+
+
+If a crash happens, the memtable gets wiped off and we will lose all the most recent changes.
+
+In order to avoid this, we can keep a separate on-disk log storage with the most recent changes appended.
+
+This will allow us to re-construct the memtable if a crash happens.
+
+Once memtable gets flushed to disk we can wipe this log storage as well.
+
+---
+
+# Performance optimization
+
+This idea of LSM Trees works well even when the dataset is much bigger than available memory.
+
+- Range queries are fast and efficient because data is stored in order
+
+- Write throughput is high because because disk writes are sequential
+
+- In order to decide how SSTables are compacted and merged there are different strategies
+(size-tiered and compaction).
+
+- one scenario where LSM-Tree algorithm suffers, is when the key does not exists.
+
+That's because you have to look into the memtable, then on disk through the segments all the way until the oldest one,
+then resign and accept the fact that the key you're looking for does not, in fact, exist.
+
+---
+
+# Solution
+In order to mitigate this problem a Bloom filter can quickly tell you if a key appears or not into the store.
+
+<br/>
+<img src="../assets/chapter03/c3-07.jpg" alt="Bloom filter" class="w-150 center m-auto"/>
+<br/>
+
+
+---
+
+# B-Trees
+yeah LSMTrees are cool and all, but the most widely used indexing structure are B-TREES.
+
+They are considered the standard index implementation in almost all relational databases (and some non-relational, too)
+
+Like LSMTrees they keep key-value pair sorted by key, but the philosophy is quite different otherwise.
+
+The algo implementation is well documented
+
+https://en.wikipedia.org/wiki/B-tree
+
+<br/>
+<img src="../assets/chapter03/c3-08.jpg" alt="Btree" class="w-100 center m-auto"/>
+<br/>
 
 ---
 
 # B-Trees
 
+
+- BTREES break the database down into fixed-sized blocks (generally 4kB or sometimes bigger)
+
+> this choice is taken in order to reflect the underlying hardware
+
+- BTREES and read/write one page at time
+
+- Each page can be identified using an address
+
+> ... which allows one page to ref another, similar to C pointers, but on disk instead of memory.
+
+- One page is the ROOT of the BTREE, every search for keys always starts from here.
+
+- Each child is responsible for a continuous range of keys
+
+- The keys between a reference indicate the boundaries
+
+---
+
+# Update a BTree:
+
+- look for the previous key value
+- update the value on that page
+- write the page back into disk
+
+<br>
+
+# Add new data to a Btree:
+
+- find the range where you new key must end
+- add the key to that page
+- if the page is full, split the page in two and create the links
+
+A balanced BTREE with N keys always has a depth of O(log n)
+
+> (a four level tree of 4kB pages with a branching factor of 500 can store up to 250TB)
+
+
+---
+
+# Reliability
+
+<br>
+The basic write operation on BTREE are overwrite operations on disk.
+
+Also some operations require different pages to be overwritten together.
+
+IF the database crashes during such events, only some pages end up being overwritten and you land in an corrupted index state.
+
+## How to make the database resilient to crashes?
+
+WAL (write-ahead-log) can restore our lost index table status if the power goes off.
+
+## How to avoid multiple write thread to mess things up?
+
+With a careful concurrency control, no shortcuts here.
+
 ---
 
 # B-Trees vs LSM-Trees
 
----
+<br/>
+<img src="../assets/chapter03/c3-09.jpg" alt="Btree-vs-LSMTree" class="w-80 center m-auto"/>
+<br/>
 
-# values in the index
+TL:DR;
+- LSM-Trees are faster for writes
 
-heap file
+- BTREES are faster for reads
 
----
-
-# Multi-column indexes
-
----
-
-# Full-text search and fuzzy indexes
 
 ---
 
-# In memory indexes
+# Other indexing structures
+
+so far we discussed only key-value indexes, but it's also very common to have secondary indexes
+
+> crucial to perform joins efficiently
+
+A secondary index can be created by using a key-value index, but the main difference is that there might be many rows for the same key.
+You can implement this by either
+
+- by making each value in the index a list
+- by making each entry unique by appending a row id to it.
+
+either way BTREES and LSMTrees can be used as secondary indexes.
+
+---
+
+# Storing values within the index
+
+the key in an index is the thing that queries search for, but the value can be two things:
+
+- the actual row
+- a reference to the row, which is stored elsewhere
+
+> on the latter case elsewhere = heap file which stores data in no particular order.
+
+
+This approach is common when multiple secondary keys are present as it does not duplicates the data
+
+Updates are efficient until the new value is no larger than the previous value.
+> if this is not the case things can get complicated (move stuff around, update indexes, all that sort of stuff...)
+
+but in some cases the extra hop to the heap file can be too much, so it could be desirable to store the indexed row straight into an index
+
+---
+
+# Different strategies
+<br>
+
+Clustered index:
+> storing all row data within the index
+
+Nonclustered index:
+>	store only reference to the data wihin the index
+
+Index with included columns:
+> hybrid approach, that stores only some of the table's columns within the index
+
+---
