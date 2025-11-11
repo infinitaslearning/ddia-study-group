@@ -37,6 +37,8 @@ db_get () {
 
 It may look trivial, but it works!
 
+(if you want to get serious [take a look at this](https://www.nan.fyi/database))
+
 ---
 
 # Our database in action
@@ -80,7 +82,7 @@ Because in order to find the key we're looking for, we need to scroll through th
 
 ## What can we do to fix that?
 
-Keep some additional metadata on the side which acts as signpost to quickly tlocate the data we want
+Keep some additional metadata on the side which acts as signpost to quickly locate the data we want
 
 ---
 
