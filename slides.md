@@ -32,3 +32,28 @@ src: ./pages/chapter-2-1.md
 ---
 src: ./pages/chapter-2-2.md
 ---
+
+<!-- Chapter 3 Start -->
+---
+class: text-center
+layout: cover
+---
+
+# DDIA Study Group
+
+Chapter 3
+
+## Storage and Retrieval
+
+---
+src: ./pages/chapter-3-1.md
+---
+
+---
+src: ./pages/chapter-3-2.md
+---
+
+---
+src: ./pages/chapter-3-discussion.md
+---
+<!-- Chapter 3 End -->
