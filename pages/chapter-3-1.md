@@ -458,3 +458,75 @@ Index with included columns:
 > hybrid approach, that stores only some of the table's columns within the index
 
 ---
+
+# Multi-column indexes
+
+The indexes before map only one key to one value.
+But if we need to query multiple columns of a table, this is no longer enough.
+
+Concatenated indexes is the most common type, it combines several fields in one key
+
+```
+SELECT * FROM restaurants WHERE lat > 51.234 AND  lat < 51.567
+													AND  long > -0.112 AND long < -0.201
+```
+
+Examples:
+
+	- phone book where first name + last name => phone number
+	- geospatial data (longitude + latitude)
+	- RGB (3d) for finding a products in a certain range of colors
+	- weather (temperature + date)
+
+<br>
+
+> NOTE: A standard BTree or LSMTree are not fit to manage this kind of query efficiently.
+
+---
+
+# Fuzzy search
+
+Until now we had exact data to search our keys, but this is not always the case.
+
+In real life we have to deal with:
+
+- similar keys
+- typos
+- synonyms of a word
+- grammatical variations
+
+Lucene is able to work with words with a distance of 1 letter (removed, added or replaced)
+
+In order to do this Lucene has a SSTable-like structure for its dictionary.
+
+Other fuzzy search techniques use document classification and ML.
+
+
+---
+
+# Keep everything in memory
+Because disks are awkward to deal with.
+
+to achieve good performance you have to know how they work, but they are cheap and durable, so we tolerate them.
+
+But nowadays RAM is getting bigger and cheaper too, so we start to see in-memory databases.
+
+- battery-powered RAM
+- logs on disks
+- periodic snapshots on disk
+- replication on other machines
+
+Advantages:
+
+- NOT on performances! disk-based db are commonly cached on RAM already
+the benefit is avoiding the encoding/data-structures required for writing into disks
+
+- some data structure are difficult to implement on disk-based storages (ex. prio queues and sets)
+
+---
+
+# End of first part
+
+<br/>
+<img src="../assets/chapter03/c3-10.jpg" alt="end-p1" class="w-100 center m-auto"/>
+<br/>
