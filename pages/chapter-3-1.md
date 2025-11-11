@@ -8,7 +8,8 @@ On the most basic level a database does only two things:
 
 # Who cares about database engines?
 
-> Why should I care about databases and how they are made?
+<br>
+- Why should I care about databases and how they are made?
 
 Because as developer you should know which database is more fit to your application requirements.
 
@@ -49,9 +50,7 @@ It may look trivial, but it works!
 
 - it's simple 
 
-- good WRITE performances
-
-append to file is fast
+- good WRITE performances (append to file is fast)
 
 
 
