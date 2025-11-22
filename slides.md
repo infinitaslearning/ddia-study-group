@@ -57,3 +57,10 @@ src: ./pages/chapter-3-2.md
 src: ./pages/chapter-3-discussion.md
 ---
 <!-- Chapter 3 End -->
+
+Chapter 4
+
+## Encoding and Evolution
+---
+src: ./pages/chapter-4-1.md
+---
