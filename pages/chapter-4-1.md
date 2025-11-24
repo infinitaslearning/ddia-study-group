@@ -14,13 +14,13 @@
 
 # Introduction
 
-<div style="margin-top: 20px">
 > "Everything changes and nothing stands still."
-</div>
+
 <!--
  This chapter makes reference to "evolvability", briefly discussed in chapter 1.
  We should aim to build systems that make it easy to adapt to change.
 -->
+
 - changes to application features require changes to the data it stores
 - in most cases this cannot happen instantly, especially with huge applications
 - new and old versions of the code and the data co-exist at the same time in the system
@@ -33,7 +33,6 @@ Backward compatibility is easier but forward compatibility is much trickier
 
 # Aims of the chapter
 
-<br>
 - discuss several data encoding formats (JSON, XML, Protocol Buffers, Thrift & Avro)
 - how they handle schema changes
 - how they support systems where old and new data or code need to co-exist
@@ -115,9 +114,7 @@ There is a huge issue in accuracy when dealing with large numbers, eg. integers 
 - CSV has no schema, so the application defines what each row and column mean. Changes need to be handled manually.
 ---
 
-<br/>
 <img src="../assets/chapter04/encoding-meme2.png" alt="another meme related to encoding" class="w-100"/>
-<br/>
 
 ---
 
@@ -127,6 +124,7 @@ There is a huge issue in accuracy when dealing with large numbers, eg. integers 
 
 - Still good enough for many purposes, especially as data interchange formats (from one org to another)
 - As long as people agree on the format, the efficiency does not matter as much.
+
 ---
 
 # Binary encoding formats
@@ -240,12 +238,13 @@ Encoded (6 bytes): `0a 04 4a 6f 68 6e 10 2a`
 ---
 
 # Final comparison
-<b>Format</b>			    <b>Total Bytes</b>
-Protocol Buffers			6 bytes
-Thrift Compact Protocol		10 bytes
-Thrift Binary Protocol		14 bytes
-MessagePack					16 bytes
-JSON (UTF-8)				24 bytes
+| Format | Total Bytes |
+|--------|-------------|
+| Protocol Buffers | 6 bytes |
+| Thrift Compact Protocol | 10 bytes |
+| Thrift Binary Protocol | 14 bytes |
+| MessagePack | 16 bytes |
+| JSON (UTF-8) | 24 bytes |
 
 ---
 
