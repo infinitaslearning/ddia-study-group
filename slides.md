@@ -70,6 +70,10 @@ Chapter 4
 
 <img src="../assets/chapter04/map-of-encoding.jpg" style="display: block; margin: 2em auto; max-height: 400px; width: auto; max-width: 700px;"/>
 
+<!--
+Join us on an adventurous journey into the fantastic island of encoding and its evolution
+-->
+
 ---
 src: ./pages/chapter-4-1.md
 ---
