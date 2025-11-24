@@ -1,10 +1,9 @@
 # 🙌 Thank You
 Let’s dive into discussion.  
-- What storage engine patterns are we using in ILPT?
-- Do we have visibility into our storage engine behavior?
-- What does “storage and retrieval” mean for *our* daily work?
-- Any real life experiences with missing indexes / indexes optimisation?
-- Any experiences with the data warehouse at ILPT and parallels to what's in the book?
-- What do we do to ensure we have good indexes at ILPT?
-- Any projects/experiences with databases other than mongo/postgres/sql server?
-
+- What is your experience with different data formats? Have you used any binary format?
+- What is your experience JSON with or without schema?
+- How do your team manages schema evolution?
+- Have you been involved in project about migrating from SOAP to REST?
+- How RPC is used around ILPT? 
+- How do we use message brokers around ILPT? (Azure Service Bus)
+- Do you know any example of real-life project where Actor model is actively used?
