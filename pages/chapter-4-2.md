@@ -10,7 +10,7 @@ layout: cover
 class: text-center flex flex-col justify-center items-center gap-16
 ---
 
-## Via Database
+## Via database
 
 ## Via service calls
 
@@ -21,7 +21,7 @@ class: text-center flex flex-col justify-center gap-8
 ---
 ## Dataflow Through Databases
 
-> "sending a message to your future self"
+### _sending a message to your future self_
 
 ```mermaid
 graph LR
@@ -45,7 +45,7 @@ Example: Scoodle school data sync. Previously it was a direct DB call and fetch 
 
 ### Different values written at different times: Data outlives code
 
-<img src="../assets/chapter04/old-app-vs-new-app.jpg" style="display: block; margin: 2em auto 0; max-height: 400px; width: auto; max-width: 700px;"/>
+<img alt="Writing data in different times" src="../assets/chapter04/old-app-vs-new-app.jpg" style="display: block; margin: 2em auto 0; max-height: 400px; width: auto; max-width: 700px;"/>
 
 ---
 class: text-center flex flex-col justify-center items-stretch gap-8
@@ -53,7 +53,7 @@ class: text-center flex flex-col justify-center items-stretch gap-8
 
 ## Dataflow Through Services: REST and RPC
 
-### REST 
+### REST
 ```mermaid
 graph LR
     A["Service A<br/>(Client)"]
@@ -85,25 +85,18 @@ graph LR
 
 ## Web services
 
-| **SOAP API** | **REST API** |
-| -- | -- |
-| Relies on SOAP (Simple Object Access Protocol) | Relies on REST (Representational State Transfer) architecture using HTTP. |
-| Transports data in standard XML format.	Generally transports data in JSON. It is based on URI. | Because REST follows a stateless model, REST does not enforce message format as XML or JSON etc. |
-| Because it is XML based and relies on SOAP, it works with WSDL| It works with GET, POST, PUT, DELETE |
-| Works over HTTP, HTTPS, SMTP, XMPP| Works over HTTP and HTTPS |
-| Highly structured/typed | Less structured -> less bulky data
-Designed with large enterprise applications in mind	| Designed with mobile devices in mind |
+| **SOAP API**                                        | **REST API**                                                                                                        |
+|-----------------------------------------------------|---------------------------------------------------------------------------------------------------------------------|
+| Relies on SOAP (Simple Object Access Protocol)      | Relies on REST (Representational State Transfer) architecture using HTTP.                                           |
+| Transports data in standard XML format.             | Generally transports data in JSON. It is based on URI, <br />but does not enforce message format |
+| Works with WSDL                                     | It works with GET, POST, PUT, DELETE                                                                                |
+| Works over HTTP, HTTPS, SMTP, XMPP                  | Works over HTTP and HTTPS                                                                                           |
+| Highly structured/typed                             | Less structured -> less bulky data                                                                                  |
+| Designed with large enterprise applications in mind | Designed with mobile devices in mind                                                                                |
 
 ---
-
-## The problems with remote procedure calls (RPCs)
-
-- Unpredictability
-- Timeout
-- Idempotency
-- Latency is wildly variable
-- Parameter encoding: large objects
-- Datatype mismatch
+class: text-left flex flex-col justify-center gap-8
+---
 
 ```diff
  const request: NotifyResultSyncRequest = {
@@ -122,6 +115,23 @@ Designed with large enterprise applications in mind	| Designed with mobile devic
 <!--
 Yesterday example: Calling a Momento Notification Service SOAP endpoint. 1 day investigation to find out the order of message body is strict otherwise always get back a 400 Bad request.
 -->
+
+---
+
+<img alt="Local VS network call" src="../assets/chapter04/local-vs-network.jpg" style="display: block; margin: 2em auto 0; max-height: 400px; width: auto; max-width: 700px;"/>
+
+---
+class: text-center flex flex-col justify-center gap-8
+---
+
+## The problems with remote procedure calls (RPCs)
+
+### Unpredictability
+### Timeout
+### Idempotency
+### Latency is wildly variable
+### Parameter encoding: large objects
+### Datatype mismatch
 
 ---
 class: text-center flex flex-col justify-center items-center gap-8
