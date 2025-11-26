@@ -57,3 +57,32 @@ src: ./pages/chapter-3-2.md
 src: ./pages/chapter-3-discussion.md
 ---
 <!-- Chapter 3 End -->
+
+<!-- Chapter 4 Start -->
+---
+class: text-center
+layout: cover
+---
+
+## Encoding and evolution
+
+Chapter 4
+
+<img alt="Map of Encoding" src="./assets/chapter04/map-of-encoding.jpg" style="display: block; margin: 2em auto; max-height: 400px; width: auto; max-width: 700px;"/>
+
+<!--
+Join us on an adventurous journey into the fantastic island of encoding and its evolution
+-->
+
+---
+src: ./pages/chapter-4-1.md
+---
+
+---
+src: ./pages/chapter-4-2.md
+---
+
+---
+src: ./pages/chapter-4-discussion.md
+---
+<!-- Chapter 4 End -->
