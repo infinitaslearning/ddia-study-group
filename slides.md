@@ -86,3 +86,9 @@ src: ./pages/chapter-4-2.md
 src: ./pages/chapter-4-discussion.md
 ---
 <!-- Chapter 4 End -->
+
+<!-- Chapter 5 Start -->
+---
+src: ./pages/chapter-5-1.md
+---
+<!-- Chapter 5 End -->
