@@ -38,20 +38,30 @@ but introduces **write conflicts** as a fundamental challenge.
 
 ## Typical Use Cases for Multi-Leader Replication
 
+<v-clicks>
+
+<br />
+
 ### Multi-Datacenter Deployments
 - Each datacenter has a local leader
 - Writes do not need to cross regions synchronously
 - System can continue operating even if regions are temporarily disconnected
+
+<br />
 
 ### Offline-First Applications
 - Mobile or desktop apps accept writes while offline
 - Changes are synchronized when connectivity is restored
 - Conflicts are resolved during synchronization
 
+<br />
+
 ### Collaborative Editing
 - Multiple users edit the same data concurrently
 - Conflicts are expected and must be resolved semantically
 - Often combined with domain-specific merge logic
+
+</v-clicks>
 
 ---
 
