@@ -91,4 +91,12 @@ src: ./pages/chapter-4-discussion.md
 ---
 src: ./pages/chapter-5-1.md
 ---
+
+---
+src: ./pages/chapter-5-2.md
+---
+
+---
+src: ./pages/chapter-5-quiz.md
+---
 <!-- Chapter 5 End -->
