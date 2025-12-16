@@ -2,12 +2,16 @@
 
 Single-leader replication is simple and widely used, but it has limitations:
 
+<v-clicks>
+
 - A **single write bottleneck**
 - Higher write latency in **multi-region deployments**
 - Availability issues during **leader failure or network partitions**
 - Difficulties supporting **offline writes**
 
-Multi-leader and leaderless replication are responses to these limitations.
+- Multi-leader and leaderless replication are responses to these limitations.
+
+</v-clicks>
 
 ---
 
@@ -53,6 +57,8 @@ but introduces **write conflicts** as a fundamental challenge.
 
 ## The Core Challenge: Write Conflicts
 
+<v-clicks>
+
 Because multiple leaders accept writes concurrently:
 
 - Two or more leaders may update the same record at the same time
@@ -66,6 +72,24 @@ Example:
 - Conflict emerges only when updates are replicated
 
 These conflicts cannot always be resolved automatically.
+
+</v-clicks>
+
+---
+
+## When Authority Breaks Down
+
+<v-clicks>
+
+- In multi-leader systems, there is no single source of truth.
+- Sometimes, multiple nodes believe they are “in charge”.
+
+## Both replicas think they’re the leader:
+<br />
+<img src="../assets/chapter05/distributed-data-meme.webp" alt="Who's the leader" class="w-80 center m-auto"/>
+
+Funny, yeah. But in production this actually is how you lose data.
+</v-clicks>
 
 ---
 
@@ -200,14 +224,35 @@ but not a replacement for anti-entropy.
 
 ## Handling Conflicts: Siblings
 
+<v-clicks>
 Concurrent writes may result in multiple versions of the same record.
 
 - Databases may return **all versions** to the client
 - These versions are often called *siblings*
 - Applications are responsible for merging or choosing
 
-Some merges are straightforward (e.g. set union),
-others require domain-specific logic.
+</v-clicks>
+
+---
+
+## Leaderless Replication Be Like
+<v-clicks>
+
+> “I don’t know which one is right. You decide.”
+
+<img src="../assets/chapter05/distributed-data-meme2.png" alt="Confusion" class="h-50 center m-auto"/>
+</v-clicks>
+
+
+## Conflict Resolution Is Application Logic
+
+<v-clicks>
+
+- Some merges are easy (set union)
+- Deletes require tombstones
+- Some conflicts cannot be auto-resolved
+
+</v-clicks>
 
 ---
 
@@ -254,11 +299,17 @@ Each choice reflects a different trade-off.
 
 ## Key Takeaways
 
-- Increasing availability increases complexity
-- Multiple writers imply conflict resolution
-- Leaderless systems push consistency concerns to applications
-- Understanding these trade-offs is essential for system design
+Chapter 5 is really about how removing a single source of truth increases availability, but forces us to confront ordering, causality, and conflict head-on.
 
+**Understanding these trade-offs is essential for system design**:
+
+<v-clicks>
+
+- **Increasing availability increases complexity**
+- **Multiple writers imply conflict resolution**
+- **Leaderless systems push consistency concerns to applications**
+
+</v-clicks>
 ---
 
 ## Transition to Next Chapter
