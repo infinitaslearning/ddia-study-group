@@ -307,6 +307,24 @@ Each choice reflects a different trade-off.
 
 ---
 
+## Replication Models in Real Products
+
+Most of us already use all three replication models every day — we just don’t call them that.
+
+| Product / System | How Replication Works |
+|------------------|----------------------|
+| Google Docs | Multi-leader with conflict resolution (CRDTs) |
+| WhatsApp messages | Multiple writers, eventual consistency |
+| Instagram likes | Highly available, leaderless-style |
+| Banking systems | Single authoritative leader |
+| Shopping carts | Leaderless, merge-friendly |
+| Git | Multi-leader with explicit conflict resolution |
+
+> Git is a great real-world analogy for replication:
+> everyone can write, conflicts are expected, and merges are explicit.
+
+---
+
 ## Key Takeaways
 
 Chapter 5 is really about how removing a single source of truth increases availability, but forces us to confront ordering, causality, and conflict head-on.
