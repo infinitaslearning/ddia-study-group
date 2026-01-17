@@ -516,6 +516,8 @@ A simple technique: **add random digits to hot keys**
 
 <!--
 Adding 2 random digits splits the load across ~100 partitions.
+Downside is that queries now have to fetch from all partitions and merge results.
+
 This is a manual technique - you decide which keys need splitting.
 -->
 
@@ -577,6 +579,8 @@ But what about **secondary indexes**?
 <!--
 With a primary key, you know exactly which partition has your data.
 Secondary indexes break this clean mapping - a "red car" could be in any partition.
+
+Sec indexes are common in SQL and now also in NoSQL
 -->
 
 ---
@@ -624,6 +628,7 @@ Each partition maintains its **own secondary index**
 
 <!--
 Writes are simple - just update the local index in the same partition.
+
 But reads are expensive - you have no idea which partitions have red cars.
 -->
 
@@ -656,6 +661,7 @@ But reads are expensive - you have no idea which partitions have red cars.
 
 <!--
 If you have 100 partitions, you're making 100 queries for a single secondary index lookup.
+
 Tail latency becomes a problem - you're as slow as your slowest partition.
 -->
 
@@ -679,6 +685,7 @@ Despite the scatter/gather overhead, it's **widely used**:
 
 <!--
 These databases accept the scatter/gather trade-off because writes stay simple.
+
 The key is designing your data model so common queries can be served from one partition.
 -->
 
@@ -743,7 +750,9 @@ How to partition the global index?
 
 <!--
 Same trade-off we saw with primary key partitioning!
+
 Range partitioning is great if you need "find all colors between blue and green".
+
 Hash partitioning spreads load but kills range queries on the index.
 -->
 
@@ -782,7 +791,9 @@ Hash partitioning spreads load but kills range queries on the index.
 
 <!--
 The async update means your index might be slightly stale.
+
 If you write a red car and immediately query for red cars, you might not see it yet.
+
 This is a fundamental trade-off of global indexes.
 -->
 
@@ -807,7 +818,9 @@ This is a fundamental trade-off of global indexes.
 
 <!--
 Read-heavy workloads favor global indexes.
+
 Write-heavy workloads favor local indexes.
+
 If you need strong consistency on reads, local indexes are safer.
 -->
 
