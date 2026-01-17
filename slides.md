@@ -100,3 +100,9 @@ src: ./pages/chapter-5-2.md
 src: ./pages/chapter-5-quiz.md
 ---
 <!-- Chapter 5 End -->
+
+<!-- Chapter 6 Start -->
+---
+src: ./pages/chapter-6-1.md
+---
+<!-- Chapter 6 End -->
