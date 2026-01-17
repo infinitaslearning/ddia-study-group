@@ -467,21 +467,346 @@ Next, we'll look at more advanced topics: rebalancing, secondary indexes, and re
 
 ---
 
-# Reflection Time
+# Skewed Workloads and Hot Spots
+
+Even with hash partitioning, **hot spots can still occur**
 
 <v-clicks>
 
-- How would you partition a **user activity log** that needs both:
-  - Queries by user (get all activity for user X)
-  - Queries by time range (get all activity in last hour)
+- Celebrity posts on social media → millions of interactions
 
-- Can you think of a scenario where **random partitioning** might actually be acceptable?
+- Using celebrity/post ID as partition key → **all requests hit one partition**
 
-- What happens when you need to **add more nodes** to a hash-partitioned system?
+- Almost no database can automatically fix this
+
+- **It's up to your application**
 
 </v-clicks>
 
 <!--
-These questions preview topics we'll cover in the next session.
-Think about them before moving on.
+Think of a viral tweet or a celebrity Instagram post. Millions of people interacting with the same post_id.
+Even perfect hash distribution can't help when everyone wants the same key.
+-->
+
+---
+
+# Relieving Hot Spots: Key Splitting
+
+A simple technique: **add random digits to hot keys**
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                                                                             │
+│   Hot key: "celebrity_123"                                                  │
+│                                                                             │
+│   Split into 100 keys:                                                      │
+│   ┌─────────────────────────────────────────────────────────────────────┐   │
+│   │  celebrity_123_00  →  Partition 7                                   │   │
+│   │  celebrity_123_01  →  Partition 2                                   │   │
+│   │  celebrity_123_02  →  Partition 5                                   │   │
+│   │  ...                                                                │   │
+│   │  celebrity_123_99  →  Partition 1                                   │   │
+│   └─────────────────────────────────────────────────────────────────────┘   │
+│                                                                             │
+│   Writes: randomly pick suffix (00-99)                                      │
+│   Reads: query ALL 100 keys, combine results                                │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+<!--
+Adding 2 random digits splits the load across ~100 partitions.
+This is a manual technique - you decide which keys need splitting.
+-->
+
+---
+
+# Key Splitting: Trade-offs
+
+<div class="grid grid-cols-2 gap-8 mt-8">
+<div>
+
+### Pros
+
+- Distributes hot spot load across partitions
+- Simple to implement
+- Can be applied selectively
+
+</div>
+<div>
+
+### Cons
+
+- **Reads become expensive** — must query all split keys and combine
+- Must **track which keys are split**
+- Splitting non-hot keys = wasted overhead
+
+</div>
+</div>
+
+<br>
+
+> Only split keys you **know** are hot spots. Don't over-engineer.
+
+<!--
+You need bookkeeping to know which keys are split.
+If you split everything, you're just adding overhead for no benefit.
+This is a targeted solution for known hot spots.
+-->
+
+---
+
+# Partitioning and Secondary Indexes
+
+So far: **key-value model** — partition by primary key
+
+But what about **secondary indexes**?
+
+<v-clicks>
+
+- "Find all cars where `color = red`"
+
+- Bread and butter of **relational databases**
+
+- Also adopted by many **NoSQL** databases
+
+- **Problem**: secondary indexes don't map neatly to partitions
+
+</v-clicks>
+
+<!--
+With a primary key, you know exactly which partition has your data.
+Secondary indexes break this clean mapping - a "red car" could be in any partition.
+-->
+
+---
+
+# Two Approaches for Secondary Indexes
+
+<v-clicks>
+
+1. **Document-based partitioning** (local index)
+
+2. **Term-based partitioning** (global index)
+
+</v-clicks>
+
+<!--
+Each approach has different trade-offs for reads vs writes.
+Let's examine both in detail.
+-->
+
+---
+
+# Approach 1: Document-Based (Local Index)
+
+Each partition maintains its **own secondary index**
+
+```
+┌────────────────────────────────────────────────────────────────────────────┐
+│                                                                            │
+│   Partition 0                         Partition 1                          │
+│   ┌─────────────────────────┐         ┌─────────────────────────┐          │
+│   │ Documents:              │         │ Documents:              │          │
+│   │   191: color=red        │         │   306: color=red        │          │
+│   │   214: color=black      │         │   768: color=yellow     │          │
+│   │                         │         │                         │          │
+│   │ Local Index:            │         │ Local Index:            │          │
+│   │   color:red    → [191]  │         │   color:red    → [306]  │          │
+│   │   color:black  → [214]  │         │   color:yellow → [768]  │          │
+│   └─────────────────────────┘         └─────────────────────────┘          │
+│                                                                            │
+└────────────────────────────────────────────────────────────────────────────┘
+```
+
+- Write: only touch the partition containing the document
+- Read: **scatter/gather** — query ALL partitions, merge results
+
+<!--
+Writes are simple - just update the local index in the same partition.
+But reads are expensive - you have no idea which partitions have red cars.
+-->
+
+---
+
+# Document-Based: Scatter/Gather
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                                                                         │
+│   Query: "Find all red cars"                                            │
+│                                                                         │
+│                           ┌─────────┐                                   │
+│                           │  Client │                                   │
+│                           └────┬────┘                                   │
+│                    ┌───────────┼────────────┐                           │
+│                    ▼           ▼            ▼                           │
+│              ┌──────────┐ ┌──────────┐ ┌─────────┐                      │
+│              │ Part 0   │ │ Part 1   │ │ Part 2  │                      │
+│              │ red:[191]│ │ red:[306]│ │ red:[]  │                      │
+│              └────┬─────┘ └────┬─────┘ └────┬────┘                      │
+│                   └────────────┼────────────┘                           │
+│                                ▼                                        │
+│                        Merge: [191, 306]                                │
+│                                                                         │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+> Scatter/gather can be expensive, especially with many partitions
+
+<!--
+If you have 100 partitions, you're making 100 queries for a single secondary index lookup.
+Tail latency becomes a problem - you're as slow as your slowest partition.
+-->
+
+---
+
+# Document-Based: Who Uses It?
+
+Despite the scatter/gather overhead, it's **widely used**:
+
+| Database | Uses Document-Based Secondary Index |
+|----------|-------------------------------------|
+| MongoDB | Yes |
+| Cassandra | Yes |
+| Riak | Yes |
+| Elasticsearch | Yes |
+| SolrCloud | Yes |
+
+<br>
+
+> If you can structure queries to hit a **single partition**, scatter/gather is avoided.
+
+<!--
+These databases accept the scatter/gather trade-off because writes stay simple.
+The key is designing your data model so common queries can be served from one partition.
+-->
+
+---
+
+# Approach 2: Term-Based (Global Index)
+
+A **global index** covering all partitions, but **itself partitioned**
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                                                                             │
+│   Data Partitions                     Index Partitions                      │
+│   ───────────────                     ────────────────                      │
+│   ┌─────────┐ ┌─────────┐            ┌─────────────────────────────────┐    │
+│   │ Part 0  │ │ Part 1  │            │ Index Partition 0 (a-r)         │    │
+│   │ 191:red │ │ 306:red │  ────────> │   color:red → [191, 306]        │    │
+│   │ 214:blk │ │ 768:ylw │            │   color:black → [214]           │    │
+│   └─────────┘ └─────────┘            ├─────────────────────────────────┤    │
+│                                      │ Index Partition 1 (s-z)         │    │
+│                                      │   color:yellow → [768]          │    │
+│                                      └─────────────────────────────────┘    │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+- Index partitioned by **term** (e.g., colors a-r in partition 0, s-z in partition 1)
+- Read: query **only the partition** containing your term
+
+<!--
+The term determines which index partition to query.
+"color:red" - 'r' falls in a-r range, so go to index partition 0.
+-->
+
+---
+
+# Term-Based: Partitioning Options
+
+How to partition the global index?
+
+<div class="grid grid-cols-2 gap-8 mt-8">
+<div>
+
+### By Term (Range)
+
+- `color:a-r` → Partition 0
+- `color:s-z` → Partition 1
+- Good for **range scans**
+- Risk of hot spots
+
+</div>
+<div>
+
+### By Hash of Term
+
+- `hash(color:red)` → Partition X
+- Even distribution
+- **No range queries**
+
+</div>
+</div>
+
+<!--
+Same trade-off we saw with primary key partitioning!
+Range partitioning is great if you need "find all colors between blue and green".
+Hash partitioning spreads load but kills range queries on the index.
+-->
+
+---
+
+# Term-Based: Trade-offs
+
+<div class="grid grid-cols-2 gap-8 mt-8">
+<div>
+
+### Reads: More Efficient
+
+- Query **single partition** for a term
+- No scatter/gather
+- Lower latency
+
+</div>
+<div>
+
+### Writes: More Complex
+
+- One document may update **multiple index partitions**
+- Requires **distributed writes**
+- Often done **asynchronously**
+
+</div>
+</div>
+
+<br>
+
+<v-click>
+
+> Synchronous updates would require distributed transactions — most DBs avoid this
+
+</v-click>
+
+<!--
+The async update means your index might be slightly stale.
+If you write a red car and immediately query for red cars, you might not see it yet.
+This is a fundamental trade-off of global indexes.
+-->
+
+---
+
+# Comparing Secondary Index Approaches
+
+| Aspect | Document-Based (Local) | Term-Based (Global) |
+|--------|------------------------|---------------------|
+| **Write** | Fast (single partition) | Slow (multiple partitions) |
+| **Read** | Slow (scatter/gather) | Fast (single partition) |
+| **Consistency** | Immediate | Often async (eventual) |
+| **Complexity** | Simpler | More complex |
+
+<br>
+
+<v-click>
+
+> Choose based on your **read/write ratio** and **consistency requirements**
+
+</v-click>
+
+<!--
+Read-heavy workloads favor global indexes.
+Write-heavy workloads favor local indexes.
+If you need strong consistency on reads, local indexes are safer.
 -->
