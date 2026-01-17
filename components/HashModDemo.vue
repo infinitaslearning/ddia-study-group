@@ -85,7 +85,7 @@ const getPartitionColor = (partition) => {
           Partition {{ currentPartition }}
         </span>
       </div>
-      <div class="nodes-label">{{ currentN }} nodes in cluster</div>
+      <div class="nodes-label">{{ currentN }} partitions in cluster</div>
     </div>
 
     <div class="history" v-if="history.length > 0">
@@ -103,19 +103,19 @@ const getPartitionColor = (partition) => {
               class="from-partition"
               :style="{ backgroundColor: getPartitionColor(item.from) }"
             >P{{ item.from }}</span>
-            <span class="arrow">→</span>
+            <span class="arrow"> → </span>
             <span
               class="to-partition"
               :style="{ backgroundColor: getPartitionColor(item.partition) }"
             >P{{ item.partition }}</span>
-            <span class="moved-label">MOVED!</span>
+            <span class="moved-label"> MOVED!</span>
           </span>
           <span v-else class="no-move">
             <span
               class="same-partition"
               :style="{ backgroundColor: getPartitionColor(item.partition) }"
             >P{{ item.partition }}</span>
-            <span class="stayed-label">stayed</span>
+            <span class="stayed-label"> stayed</span>
           </span>
         </div>
       </div>
