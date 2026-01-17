@@ -810,3 +810,394 @@ Read-heavy workloads favor global indexes.
 Write-heavy workloads favor local indexes.
 If you need strong consistency on reads, local indexes are safer.
 -->
+
+---
+
+# Rebalancing Partitions
+
+Things change: queries evolve, datasets grow, nodes fail
+
+**Rebalancing** = moving data between nodes to adapt
+
+<v-clicks>
+
+- After rebalancing, load should be **shared fairly**
+
+- Database should **continue accepting requests** during rebalancing
+
+- Move only the **minimum data** needed (minimize I/O and network)
+
+</v-clicks>
+
+<!--
+Rebalancing is inevitable in any production system.
+The question is: how do we do it efficiently without disrupting service?
+-->
+
+---
+
+# How NOT to Rebalance: hash mod N
+
+Why `hash(key) % N` is a **terrible** idea for partitioning:
+
+<HashModDemo />
+
+> Adding one node triggers massive data migration
+
+<!--
+This is why we need smarter rebalancing strategies.
+The goal is to minimize data movement when the number of nodes changes.
+Click "Add Node" multiple times to see how often the key moves to a different partition.
+-->
+
+---
+
+# Strategy 1: Fixed Number of Partitions
+
+Choose a **high number of partitions upfront** — never change it
+
+<FixedPartitionsDemo />
+
+- New node **steals entire partitions** from existing nodes
+- In practice: **1000+ partitions** (demo uses 6 for clarity)
+
+<!--
+The key insight: move whole partitions, not individual keys.
+This makes rebalancing much more efficient.
+Try adding/removing nodes to see how few partitions actually need to move!
+In real systems you'd have hundreds or thousands of partitions for better granularity.
+-->
+
+---
+
+# Fixed Partitions: Who Uses It?
+
+| Database | Fixed Partition Strategy |
+|----------|--------------------------|
+| Elasticsearch | Yes |
+| Riak | Yes |
+| Couchbase | Yes |
+| Voldemort | Yes |
+
+<br>
+
+<v-click>
+
+### Downsides
+
+- Max partitions = max nodes you can ever have
+- Each partition has **overhead** — too many = waste
+- Hard to pick the "right" number upfront
+
+</v-click>
+
+<!--
+If you pick 100 partitions but later need 200 nodes, you're stuck.
+If you pick 10000 partitions for a small dataset, you waste resources on overhead.
+-->
+
+---
+
+# Strategy 2: Dynamic Partitioning
+
+Let partitions **split and merge** based on data size
+
+<DynamicPartitionsDemo />
+
+- Partition **too large** → split into 2
+- Partition **too small** → merge with adjacent
+- Used by **HBase** and **RethinkDB**
+
+<!--
+Number of partitions adapts to actual data volume.
+Small dataset = few partitions = low overhead.
+In the example we don't show the "Merge" operation for simplicity.
+Notice the "cold start" problem: starting with 1 partition means no parallelism initially.
+-->
+
+---
+
+# Dynamic Partitioning: Caveat
+
+**Empty database problem**: starts with 1 partition
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                                                                         │
+│   Initial state:                                                        │
+│                                                                         │
+│   Node 1         Node 2         Node 3         Node 4                   │
+│   ┌─────────┐    ┌─────────┐    ┌─────────┐    ┌─────────┐              │
+│   │ Part 1  │    │ (idle)  │    │ (idle)  │    │ (idle)  │              │
+│   │ ALL     │    │         │    │         │    │         │              │
+│   │ WRITES  │    │         │    │         │    │         │              │
+│   └─────────┘    └─────────┘    └─────────┘    └─────────┘              │
+│                                                                         │
+│   Solution: PRE-SPLITTING — start with multiple empty partitions        │
+│                                                                         │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+> Pre-splitting requires knowing your key distribution upfront
+
+<!--
+Without pre-splitting, you're essentially single-node until you accumulate enough data.
+Works for both key-range AND hash-partitioned data.
+-->
+
+---
+
+# Strategy 3: Partitions Proportional to Nodes
+
+Fixed number of partitions **per node** (not total)
+
+<ProportionalPartitionsDemo />
+
+- New node **randomly splits** existing partitions and takes half
+- Used by **Cassandra** (256 partitions per node by default)
+- Closest to original **consistent hashing** definition
+
+<!--
+Used by Cassandra. The randomization makes it self-balancing over time.
+With many partitions per node, statistical averaging ensures fairness.
+Demo uses 2 partitions per node for clarity - real systems use 256+.
+-->
+
+---
+
+# Comparing Rebalancing Strategies
+
+| Strategy | Pros | Cons |
+|----------|------|------|
+| **Fixed partitions** | Simple, predictable | Must guess partition count upfront |
+| **Dynamic** | Adapts to data size | Cold start problem |
+| **Proportional to nodes** | Auto-scales with cluster | Requires hash partitioning |
+
+<!--
+Each strategy fits different use cases.
+Fixed is good when you can predict scale.
+Dynamic is good for unpredictable growth.
+Proportional is good for large, evolving clusters.
+-->
+
+---
+
+# Automatic vs Manual Rebalancing
+
+Should rebalancing happen **automatically**?
+
+<div class="grid grid-cols-2 gap-8 mt-8">
+<div>
+
+### Fully Automatic
+
+- Convenient, no human intervention
+- Risk: cascading failures
+- Overloaded node → marked as dead → rebalancing starts → more load → more "failures"
+
+</div>
+<div>
+
+### Human in the Loop
+
+- System **suggests** rebalancing
+- Human **approves** before execution
+- Safer, but requires attention
+
+</div>
+</div>
+
+<br>
+
+> Rebalancing is expensive — network and I/O intensive. Timing matters.
+
+<!--
+Most production systems prefer human oversight.
+Automatic rebalancing + automatic failure detection = dangerous combination.
+-->
+
+---
+
+# Request Routing
+
+We've partitioned data across nodes. But **how do clients find the right node?**
+
+This is a general problem called **service discovery**
+
+<!--
+Even with perfect partitioning, if clients can't find the data, it's useless.
+This is a fundamental distributed systems challenge.
+-->
+
+---
+
+# Three Routing Approaches
+
+<RoutingApproachesDemo />
+
+---
+
+# Routing: The Synchronization Challenge
+
+All components must have **consistent view** of partition → node mapping
+
+<v-clicks>
+
+- What if routing tier thinks partition P is on Node 1...
+- ...but it actually moved to Node 3?
+- Request goes to **wrong node** → failure or redirect overhead
+
+</v-clicks>
+
+<v-click>
+
+> Keeping routing information in sync is the hard problem
+
+</v-click>
+
+<!--
+This is why most systems use a coordination service or gossip protocol.
+Stale routing information = failed or slow requests.
+-->
+
+---
+
+# Coordination Service: ZooKeeper
+
+Many distributed systems use **ZooKeeper** for cluster metadata
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                                                                             │
+│                           ┌─────────────┐                                   │
+│                           │  ZooKeeper  │                                   │
+│                           │  (cluster   │                                   │
+│                           │  metadata)  │                                   │
+│                           └──────┬──────┘                                   │
+│               ┌──────────────────┼──────────────────┐                       │
+│               │                  │                  │                       │
+│               ▼                  ▼                  ▼                       │
+│         ┌────────────┐       ┌───────────┐      ┌───────────┐               │
+│         │  Router    │       │  Node 1   │      │  Node 2   │               │
+│         │(subscribed)│       │(registers)│      │(registers)│               │
+│         └────────────┘       └───────────┘      └───────────┘               │
+│                                                                             │
+│   - Nodes register in ZooKeeper                                             │
+│   - ZooKeeper maintains authoritative partition → node mapping              │
+│   - Routing tier subscribes to changes                                      │
+│   - Changes broadcast to subscribers                                        │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+<!--
+ZooKeeper provides the single source of truth.
+When partitions move, ZooKeeper notifies all interested parties.
+-->
+
+---
+
+# Alternative: Gossip Protocol
+
+**Cassandra** and **Riak** avoid external coordination
+
+```
+┌──────────────────────────────────────────────────────────────────────────┐
+│                                                                          │
+│   No central coordinator — nodes gossip with each other                  │
+│                                                                          │
+│   ┌────────┐                                                             │
+│   │ Client │                                                             │
+│   └───┬────┘                                                             │
+│       │ request                                                          │
+│       ▼                                                                  │
+│   ┌────────┐  gossip   ┌────────┐  gossip   ┌────────┐                   │
+│   │ Node 1 │ <──────── │ Node 2 │ ────────> │ Node 3 │                   │
+│   └───┬────┘           └────────┘           └────┬───┘                   │
+│       │                                          |                       │
+│       └──────── forwards to correct node ────────┘                       │
+│                                                                          │
+└──────────────────────────────────────────────────────────────────────────┘
+```
+
+- Request sent to **any node**
+- That node forwards to the correct one (approach 1)
+- More complexity in DB nodes, but **no external dependency**
+
+<!--
+Trade-off: simpler infrastructure vs more complex node logic.
+Gossip protocols eventually converge, so there can be brief inconsistencies.
+-->
+
+---
+
+# Routing: Who Uses What?
+
+| Database | Routing Approach |
+|----------|------------------|
+| Cassandra | Gossip protocol (any node) |
+| Riak | Gossip protocol (any node) |
+| MongoDB | Routing tier (mongos) |
+| HBase | ZooKeeper coordination |
+| Couchbase | No automatic rebalance (simpler) |
+
+<!--
+Each database made different trade-offs.
+Couchbase simplifies by not auto-rebalancing, reducing coordination complexity.
+-->
+
+---
+
+# Parallel Query Execution
+
+So far: simple queries (read/write **single key**)
+
+But what about **complex analytical queries**?
+
+<v-clicks>
+
+- **MPP** (Massively Parallel Processing) systems
+
+- Query optimizer breaks query into **execution stages**
+
+- Stages distributed across **multiple nodes in parallel**
+
+- Especially beneficial for **large scans**
+
+</v-clicks>
+
+<v-click>
+
+> We'll explore MPP and analytical queries in a later chapter
+
+</v-click>
+
+<!--
+This is just a teaser. Parallel query execution is a deep topic.
+OLAP workloads benefit enormously from parallelization across partitions.
+-->
+
+---
+
+# Chapter 6 Summary
+
+<v-clicks>
+
+- **Partitioning** splits data across nodes for scalability
+
+- **Key range** vs **hash** partitioning — trade-off between range queries and even distribution
+
+- **Hot spots** can still occur — application-level solutions (key splitting)
+
+- **Secondary indexes**: local (scatter/gather) vs global (async updates)
+
+- **Rebalancing**: fixed partitions, dynamic, or proportional to nodes
+
+- **Request routing**: coordination service (ZooKeeper) or gossip protocol
+
+</v-clicks>
+
+<!--
+Partitioning is fundamental to scaling databases.
+The key is understanding the trade-offs and choosing based on your access patterns.
+-->
