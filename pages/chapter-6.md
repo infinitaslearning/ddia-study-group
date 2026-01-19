@@ -57,6 +57,8 @@ The main goal: **Scalability**
 - Query load → distributed across many **processors**
 
 <!--
+To distribute data and load across multiple machines.
+
 With 10 nodes handling a fair share each, you theoretically get 10x the storage capacity and 10x the read/write throughput.
 This is the promise of horizontal scaling through partitioning.
 -->
@@ -107,7 +109,9 @@ In practice, partitioning is **combined with replication**
 
 <!--
 Each node can be leader for some partitions and follower for others.
+
 This distributes both the data AND the write load across the cluster.
+
 If Node 1 fails, the followers of P1 on other nodes can take over.
 -->
 
@@ -437,7 +441,9 @@ Primary key: `(user_id, update_timestamp)`
 
 <!--
 This pattern is perfect for timelines, activity feeds, sensor data per device, etc.
+
 You fix the first column and range query on subsequent columns.
+
 The key is designing your schema around your access patterns.
 -->
 

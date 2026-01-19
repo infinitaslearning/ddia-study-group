@@ -103,6 +103,6 @@ src: ./pages/chapter-5-quiz.md
 
 <!-- Chapter 6 Start -->
 ---
-src: ./pages/chapter-6-1.md
+src: ./pages/chapter-6.md
 ---
 <!-- Chapter 6 End -->
