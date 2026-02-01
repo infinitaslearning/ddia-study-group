@@ -111,4 +111,8 @@ src: ./pages/chapter-6.md
 ---
 src: ./pages/chapter-7.md
 ---
+
+---
+src: ./pages/chapter-7-2.md
+---
 <!-- Chapter 7 End -->
