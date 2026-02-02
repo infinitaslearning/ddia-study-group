@@ -109,7 +109,7 @@ src: ./pages/chapter-6.md
 
 <!-- Chapter 7 Start -->
 ---
-src: ./pages/chapter-7.md
+src: ./pages/chapter-7-1.md
 ---
 
 ---
