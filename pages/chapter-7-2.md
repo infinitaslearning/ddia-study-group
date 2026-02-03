@@ -54,6 +54,8 @@ UPDATE counters SET value = value + 1 WHERE key = 'foo';
 
 **1.5 Or simply force atomic operations to be executred on a single tread**
 
+</v-click>
+
 <v-click>
 
 **2. Explicit locking**
