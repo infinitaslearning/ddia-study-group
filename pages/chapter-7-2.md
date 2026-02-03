@@ -273,6 +273,24 @@ Choose your isolation level consciously based on your application's consistency 
 -->
 
 ---
+layout: center
+class: text-center
+---
+
+# Thank You!
+
+### Questions?
+
+<!--
+And that's Chapter 7! Transactions are deep and complex, but hopefully this gives you a solid foundation.
+
+The key insight: transactions exist on a spectrum from weak to strong.
+Understanding that spectrum is crucial for building reliable systems.
+
+Questions?
+-->
+
+---
 
 # Discussion Questions
 
@@ -319,20 +337,3 @@ Have we seen this pattern? Did we recognize it as write skew?
 How did we handle it - database constraints, locking, or just accepted the occasional conflict?
 -->
 
----
-layout: center
-class: text-center
----
-
-# Thank You!
-
-### Questions?
-
-<!--
-And that's Chapter 7! Transactions are deep and complex, but hopefully this gives you a solid foundation.
-
-The key insight: transactions exist on a spectrum from weak to strong.
-Understanding that spectrum is crucial for building reliable systems.
-
-Questions?
--->
