@@ -1,177 +1,338 @@
----
-theme: default
-title: When MongoDB Transactions Go Wrong
-info: A short production incident story
----
-
-# When MongoDB Transactions Go Wrong
-
-### A production lesson from MongoDB Atlas
-
-<br/>
-
-**Goal:** Atomic product updates  
-**Result:** Database meltdown
 
 ---
 
-## The Problem We Were Solving
+# Lost Updates Problem
 
-- A **product** consists of **many MongoDB documents**
-- Publishing must appear **atomic** to readers
+**Read-modify-write cycle** — surprisingly common!
 
-### Two update strategies
+<v-clicks>
 
-1. **Full replace**
-   - Delete product → write it back
-   - Heavy DB load
-   - Risk of missing / partial reads
+- Incrementing a counter
+- Updating account balance
+- Editing a JSON document
+- Two users editing a wiki page
 
-2. **Delta updates**
-   - Smaller writes
-   - Risk of drift and orphan documents
+</v-clicks>
 
-**Idea:** Use MongoDB transactions to make full replace safe
+<v-click>
 
----
+```
+User 1: Read counter (42) → +1 → Write 43
+User 2: Read counter (42) → +1 → Write 43
 
-## Why It Worked in Development
+Expected: 44
+Actual: 43   ← One update lost!
+```
 
-**Development setup**
-- Node.js
-- Single local MongoDB container
-- No sharding
-- Small datasets
+</v-click>
 
-**Result**
-- Transactions worked fine
-- No visible performance issues
-- Gave a false sense of safety
+<!--
+Here's another common concurrency bug.
 
-> Local success ≠ production safety
+Both users read the counter at 42.
+Both add 1 locally.
+Both write 43.
 
----
+The second write CLOBBERS the first. One update is lost.
 
-## Production Reality (MongoDB Atlas)
+This happens all the time: updating bank balances, like counts, inventory levels.
 
-**Production setup**
-- MongoDB Atlas
-- **3-shard cluster**
-- Large products
-- Many documents per product
-- Real concurrency
-
-**Key difference**
-- One transaction:
-  - Spanned multiple shards
-  - Touched thousands of documents
-  - Ran for a long time
-
-This changed everything.
+Neither Read Committed nor Snapshot Isolation prevent this by default!
+-->
 
 ---
 
-## What MongoDB Transactions Really Do
+# Solutions to Lost Updates
 
-MongoDB uses **WiredTiger**
+**1. Atomic operations** (best if available)
 
-During a transaction:
-- All writes are kept **in memory**
-- Old document versions are preserved
-- Changes are invisible until commit
-- Cache eviction is restricted
+```sql
+UPDATE counters SET value = value + 1 WHERE key = 'foo';
+```
 
-**Large transaction = large cache footprint**
+<v-click>
 
-Sharded transactions multiply this cost.
+**1.5 Or simply force atomic operations to be executred on a single tread**
 
+<v-click>
 
----
+**2. Explicit locking**
 
-## The WiredTiger Cache Collapse
+```sql
+SELECT * FROM figures WHERE name = 'robot' FOR UPDATE;
+-- Now we have exclusive lock, safe to modify
+UPDATE figures SET position = 'c4' WHERE id = 1234;
+```
 
-**What went wrong**
-- Huge transaction
-- Many large documents
-- Long execution time
-- Cross-shard coordination
+</v-click>
 
-**Result**
-- WiredTiger cache filled up
-- Eviction couldn’t keep up
-- Memory pressure exploded
-- Writes stalled
-- Reads stalled
+<v-click>
 
-**The cluster became unresponsive**
+**3. Automatic detection** (PostgreSQL, Oracle)
+- Database detects lost update
+- Aborts transaction
+- Application retries
 
----
+</v-click>
 
-## Why It Spiraled Out of Control
+<!--
+There are several ways to prevent lost updates.
 
-- Long-running transaction blocked cleanup
-- Old document versions stayed in cache
-- Other operations piled on
-- Feedback loop:
-  - More memory → less progress
-  - Less progress → more memory
+BEST: Use atomic operations. Most databases support atomic increment/decrement.
+The database handles concurrency internally.
 
-> The database wasn’t slow — it was stuck
+GOOD: Explicit locking. SELECT FOR UPDATE locks the rows.
+Other transactions must wait. Then you can safely read-modify-write.
 
----
+NICE: Automatic detection. Some databases (PostgreSQL, Oracle) automatically detect lost updates and abort.
+MySQL doesn't do this, by the way.
 
-## Why We Only Saw This in Production
-
-**Local MongoDB hid the problem**
-- No sharding
-- Small data
-- Short transactions
-
-**Atlas exposed it**
-- Sharded transactions are expensive
-- Real data sizes matter
-- WiredTiger cache has hard limits
-- Concurrency amplifies everything
+Choose the right tool for your use case.
+-->
 
 ---
 
-## The Fix: No Transactions
+# Write Skew: A Subtler Problem
 
-We removed transactions entirely.
+**The on-call doctor scenario:**
 
-### New write order
+<v-clicks>
 
-1. **Create all new documents**
-2. **Update existing documents**
-   - Point to new docs
-   - Remove references to soon-to-be-deleted docs
-3. **Delete unreferenced documents**
+- Hospital requires **at least one doctor** on call
+- Alice and Bob are both on call
+- Both feel sick, both try to go off call
+- Both check: "2 doctors on call, safe to proceed"
+- Both update their own record
+- Result: **0 doctors on call** ⚠️
 
----
+</v-clicks>
 
-## Why This Works Better
+<!--
+This is write skew—subtler than lost updates.
 
-- No massive transaction state
-- Short-lived operations
-- Minimal inconsistency window
-- Database remains responsive
+Both transactions read the same data (count of on-call doctors).
+Both see 2, so both proceed.
+But they update DIFFERENT objects (Alice's record vs Bob's record).
 
-**Trade-off:**  
-Slightly weaker atomicity → massively better stability
+The reads and writes don't directly conflict, but together they violate a constraint.
 
----
-
-## Takeaways
-
-- MongoDB transactions are **not free**
-- Large bulk rewrites inside transactions are dangerous
-- Sharding amplifies transaction cost
-- WiredTiger cache is a hard limit
-- Careful write ordering often beats “perfect” atomicity
+Read Committed doesn't prevent this. Snapshot Isolation doesn't prevent this.
+Even automatic lost update detection doesn't help because different objects are being updated.
+-->
 
 ---
 
-## Final Thought
+# More Examples of Write Skew
 
-> We tried to make the database do less work for our application  
-> and ended up making it do much more.
+<v-clicks>
+
+**Meeting room booking:**
+- Check for conflicts in time slot
+- If none, book the room
+- Two concurrent bookings → double-booked!
+
+**Claiming a username:**
+- Check if username is taken
+- If not, create account
+- Two concurrent requests → duplicate usernames!
+
+**Multiplayer game:**
+- Check if move is valid
+- If yes, update game state
+- Two concurrent moves → invalid game state!
+
+</v-clicks>
+
+<!--
+Once you know about write skew, you see it everywhere.
+
+Meeting rooms: Check for overlapping bookings, find none, insert yours.
+But someone else just did the same thing. Now there are two bookings.
+
+Usernames: Check if "alice" is taken, it's not, create account.
+But someone else just claimed "alice" too.
+
+Games: Check if move is legal given current board state, it is, make the move.
+But the board state just changed.
+
+All of these are write skew: read data, make a decision, write based on that decision.
+But the premise changed between read and write.
+-->
+
+---
+
+# Preventing Write Skew
+
+**Options are limited:**
+
+<v-clicks>
+
+1. **Explicitly lock the rows** you read
+   ```sql
+   SELECT * FROM doctors WHERE on_call = true FOR UPDATE;
+   ```
+
+2. **Use database constraints** (if supported)
+   - But most constraints are single-object
+   - Multi-object constraints rarely supported
+
+3. **Use serializable isolation** ← The real solution
+
+</v-clicks>
+
+<!--
+Write skew is harder to prevent than lost updates.
+
+Atomic operations don't help—multiple objects involved.
+Automatic detection doesn't work—different objects updated.
+
+Your best bet is explicitly locking the rows with FOR UPDATE.
+This forces serialization.
+
+Or use database constraints if possible. But most databases can't enforce "at least one doctor on call" as a constraint.
+
+The real answer: serializable isolation. Which brings us to...
+-->
+
+---
+
+# Serializable Isolation
+
+**The strongest isolation level**
+
+Guarantees: transactions behave as if executed **serially** (one at a time)
+
+<v-clicks>
+
+**Three main approaches:**
+1. **Actual Serial Execution** — Literally run one transaction at a time
+2. **Two-Phase Locking** — Pessimistic locking
+3. **Serializable Snapshot Isolation** — Optimistic concurrency control
+
+</v-clicks>
+
+<v-click>
+
+Each has different trade-offs in **performance** and **scalability**
+
+</v-click>
+
+<!--
+Serializable isolation is the gold standard. No race conditions possible.
+
+Transactions produce the same result as if they ran one at a time.
+
+But how do you implement this without actually running one at a time? That would be terribly slow.
+
+There are three main approaches, and they have VERY different performance characteristics.
+
+Actual serial execution: Use if transactions are fast and dataset fits in memory.
+Two-phase locking: Pessimistic, lots of waiting, but works for any workload.
+Serializable Snapshot Isolation: Optimistic, great performance IF conflict rate is low.
+
+We won't dive into the details now, but the key point: serializability IS achievable even in distributed systems.
+-->
+
+---
+
+# Key Takeaways
+
+<v-clicks>
+
+1. **Transactions simplify application code** by handling edge cases
+
+2. **ACID is ambiguous**—ask about isolation levels specifically
+
+3. **Weak isolation levels** are common but lead to subtle bugs
+
+4. **Read Committed:** Prevents dirty reads/writes (bare minimum)
+
+5. **Snapshot Isolation:** Prevents read skew (needed for analytics)
+
+6. **Serializable:** Prevents ALL concurrency issues (expensive but possible)
+
+7. **Choose isolation level** based on your consistency needs
+
+</v-clicks>
+
+<!--
+Let's recap.
+
+Transactions aren't just an academic concept. They're essential for building correct applications.
+
+But not all transactions are equal. The isolation level matters HUGELY.
+
+Read Committed is the bare minimum. It prevents the most obvious bugs.
+Snapshot Isolation gives you consistent snapshots for long operations.
+Serializable prevents ALL race conditions but costs performance.
+
+The key is to UNDERSTAND what guarantees you're getting.
+Don't just assume "ACID compliant" means you're safe.
+
+Choose your isolation level consciously based on your application's consistency requirements.
+-->
+
+---
+
+# Discussion Questions
+
+<v-clicks>
+
+1. Have we ever considered **transaction support** when choosing a database? Or do we pick based on other factors (speed, scalability, familiarity)?
+
+2. When do we actually **use transactions at Infinitas**? Do we have examples? Or do we mostly accept eventual consistency and lost writes?
+
+3. What isolation level do our production databases use? **Do we know?** Have we consciously chosen it?
+
+4. When would you choose **performance over strict serializability**? Where have we made this trade-off?
+
+5. Do we have any examples of **concurrency bugs** we've found in our applications? How did we discover and fix them?
+
+6. Have we encountered **write skew** in our systems? How do we typically handle scenarios where multiple transactions read the same data and update different records (like booking conflicts, claiming unique values, or enforcing multi-record constraints)?
+
+</v-clicks>
+
+<!--
+Let's reflect on our own systems at Infinitas.
+
+First: When we choose MongoDB vs PostgreSQL vs whatever - do we think about transactions?
+Or do we focus on performance, developer experience, and scalability?
+Be honest - has transaction support ever been a deciding factor?
+
+Second: Where DO we use transactions? Look at your codebases.
+Are there places where we SHOULD be using them but aren't?
+Are we accepting lost updates without realizing it?
+
+Third: Isolation levels. Most of us probably have no idea what our databases are set to.
+Is it Read Committed? Snapshot Isolation? Did we choose it or just accept the default?
+
+Fourth: Performance vs correctness. Where have we consciously said "eventual consistency is good enough"?
+Was that the right call? Any regrets?
+
+Fifth: Concurrency bugs. These are the worst. They only show up under load.
+Have we found any? How? Load testing? Production incidents?
+What did we learn?
+
+Sixth: Write skew - this one's important because it's SO common but often invisible.
+Think about reservation systems, inventory management, username claims.
+Have we seen this pattern? Did we recognize it as write skew?
+How did we handle it - database constraints, locking, or just accepted the occasional conflict?
+-->
+
+---
+layout: center
+class: text-center
+---
+
+# Thank You!
+
+### Questions?
+
+<!--
+And that's Chapter 7! Transactions are deep and complex, but hopefully this gives you a solid foundation.
+
+The key insight: transactions exist on a spectrum from weak to strong.
+Understanding that spectrum is crucial for building reliable systems.
+
+Questions?
+-->
