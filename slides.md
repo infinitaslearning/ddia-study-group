@@ -117,6 +117,10 @@ src: ./pages/chapter-7-2.md
 ---
 
 ---
-src: ./pages/chapter-7-extra-1.md
+src: ./pages/chapter-7-irl-1.md
+---
+
+---
+src: ./pages/chapter-7-discussion.md
 ---
 <!-- Chapter 7 End -->
