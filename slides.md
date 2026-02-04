@@ -106,3 +106,25 @@ src: ./pages/chapter-5-quiz.md
 src: ./pages/chapter-6.md
 ---
 <!-- Chapter 6 End -->
+
+<!-- Chapter 7 Start -->
+---
+src: ./pages/chapter-7-1.md
+---
+
+---
+src: ./pages/chapter-7-2.md
+---
+
+---
+src: ./pages/chapter-7-irl-1.md
+---
+
+---
+src: ./pages/chapter-7-irl-2.md
+---
+
+---
+src: ./pages/chapter-7-discussion.md
+---
+<!-- Chapter 7 End -->
