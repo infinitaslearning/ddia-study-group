@@ -160,7 +160,7 @@ When you send a network request, many things can happen.
 
 [click] Or the response is delayed.
 
-[click] Here's the key insight: from the sender's perspective, you often can't tell which one happened. All you know is you didn't get a response.
+[click] And here's the thing — from the sender's perspective, you often can't tell which one happened. All you know is: no response.
 -->
 
 ---
@@ -212,53 +212,6 @@ The sender cannot distinguish between:
 The only way to know something succeeded is to get a positive acknowledgment back.
 -->
 
----
-
-# Real Disaster: AWS S3 Outage (2017)
-
-<div class="mt-8 p-6 bg-gray-800 rounded-lg">
-
-**February 28, 2017 - "The day the internet broke"**
-
-<v-clicks>
-
-- An engineer ran a command to take a few servers offline
-- **Typo**: removed WAY more servers than intended
-- S3 in us-east-1 went down for 4+ hours
-- Cascading failures: sites couldn't load images, configs, assets
-
-</v-clicks>
-
-</div>
-
-<v-click>
-
-<div class="mt-6">
-
-**Who was affected?**
-- Slack, Trello, Quora, IFTTT
-- Nest thermostats stopped working
-- Some sites couldn't even display error pages (hosted on S3!)
-
-</div>
-
-</v-click>
-
-<!--
-Let me tell you about a real disaster. February 28, 2017.
-
-[click] An Amazon engineer was debugging S3's billing system. They ran a command to remove some servers from service.
-
-[click] Small typo. Removed way more servers than intended.
-
-[click] S3 in us-east-1 went down. For over 4 hours.
-
-[click] Cascading failures everywhere. Sites couldn't load images, configs, static assets.
-
-[click] Who was affected? Slack, Trello, Quora. Nest thermostats stopped working. Some sites couldn't even show their error pages because those were hosted on S3!
-
-One typo took down a chunk of the internet. This is the fragility of distributed systems.
--->
 
 ---
 
@@ -455,7 +408,7 @@ Choose based on what matters more to your application.
 </v-click>
 
 <!--
-Quick aside on UDP. Why does video streaming use UDP instead of TCP?
+By the way — why does video streaming use UDP instead of TCP?
 
 [click] TCP guarantees delivery by retransmitting lost packets.
 
@@ -738,13 +691,13 @@ Every computer has a quartz crystal oscillator.
 
 [click] It vibrates at a known frequency.
 
-[click] Count oscillations, you get time.
+[click] Count oscillations, track time.
 
 [click] Simple, but crystals aren't perfect.
 
 [click] The problem: they drift!
 
-[click] A good crystal might drift 35 milliseconds per day. A cheap one, or one in a hot server room, might drift 17 SECONDS per day. Leave a server running for a month? It could be minutes off.
+[click] Think of it like a cheap wristwatch — runs a bit fast or slow. A good crystal drifts ~35ms per day. A cheap one, or one baking in a hot server room, might drift 17 SECONDS per day. Leave a server running for a month without sync? Minutes off.
 -->
 
 ---
@@ -951,7 +904,7 @@ A node with a drifted clock might serve stale data thinking it's fresh.
 </v-click>
 
 <!--
-Practical advice: if your system relies on clocks, you MUST monitor them.
+If your system relies on clocks, monitor them.
 
 [click] Compare node clocks against NTP servers regularly.
 
@@ -1002,19 +955,17 @@ TrueTime.now() → [earliest, latest]
 </v-click>
 
 <!--
-Here's a sophisticated approach: confidence intervals.
+So we can't know the exact time — only an approximation.
 
-We can't know the exact time, only an approximation.
+[click] NTP gives you time plus or minus some error margin.
 
-[click] NTP gives time plus or minus some error margin.
-
-[click] Instead of a point in time, think of a range.
+[click] Instead of a single point, think of it as a range.
 
 [click] "The time is somewhere between earliest and latest."
 
-[click] Google Spanner's TrueTime API does exactly this. Returns a confidence interval, not a single timestamp. Before committing, Spanner waits out the uncertainty. If intervals don't overlap, you have guaranteed ordering.
+[click] Google Spanner's TrueTime API actually exposes this. Returns a confidence interval instead of a timestamp. Spanner waits out the uncertainty before committing — if intervals don't overlap, you've got guaranteed ordering.
 
-But only Spanner does this. Requires GPS and atomic clocks in every datacenter. For everyone else, timestamps across machines are unreliable.
+The catch? Only Spanner does this. Requires GPS and atomic clocks in every datacenter. For everyone else, timestamps across machines remain unreliable.
 -->
 
 ---
@@ -1034,9 +985,9 @@ But only Spanner does this. Requires GPS and atomic clocks in every datacenter. 
 │ Comparable across       │ Yes (if synced)        │ NO                     │
 │ machines?               │                        │                        │
 ├─────────────────────────┼────────────────────────┼────────────────────────┤
-│ Use for timestamps?     │ ⚠️  With caution       │ ❌ Never               │
+│ Use for timestamps?     │ ⚠︎  With caution        │ ⨯ Never                │
 ├─────────────────────────┼────────────────────────┼────────────────────────┤
-│ Use for duration?       │ ❌ Never               │ ✅ Yes                 │
+│ Use for duration?       │ ⨯ Never                │ ✔︎ Yes                  │
 ├─────────────────────────┼────────────────────────┼────────────────────────┤
 │ Precision               │ Milliseconds           │ Nanoseconds            │
 └─────────────────────────┴────────────────────────┴────────────────────────┘
@@ -1054,76 +1005,6 @@ Monotonic: answers "how long did it take?" Never jumps. Not comparable across ma
 Know which clock you're using and why!
 -->
 
----
-
-# Key Takeaways
-
-<div class="grid grid-cols-2 gap-8 mt-8">
-<div>
-
-**Networks lie**
-
-<v-clicks>
-
-- Requests can fail silently
-- You can't tell failure from slowness
-- Timeouts are guesses, not guarantees
-- Design for network partitions
-
-</v-clicks>
-
-</div>
-<div>
-
-**Clocks lie**
-
-<v-clicks>
-
-- Clocks drift without synchronization
-- NTP helps but isn't perfect
-- Time-of-day clocks can jump backward
-- Use monotonic clocks for duration
-
-</v-clicks>
-
-</div>
-</div>
-
-<v-click>
-
-<div class="mt-8 p-4 bg-blue-900/30 rounded-lg text-center text-xl">
-
-**Assume failure. Design for resilience. Trust nothing.**
-
-</div>
-
-</v-click>
-
-<!--
-Key takeaways.
-
-Networks lie.
-
-[click] Requests can fail silently.
-
-[click] You can't tell failure from slowness.
-
-[click] Timeouts are guesses, not guarantees.
-
-[click] Design for network partitions.
-
-Clocks lie.
-
-[click] Clocks drift without synchronization.
-
-[click] NTP helps but isn't perfect.
-
-[click] Time-of-day clocks can jump backward.
-
-[click] Use monotonic clocks for duration.
-
-[click] The overarching message: Assume failure. Design for resilience. Trust nothing.
--->
 
 ---
 
@@ -1133,15 +1014,15 @@ Clocks lie.
 
 <div class="text-6xl mb-8">🤔</div>
 
-**Questions for the group:**
+**Let's discuss:**
 
 <v-clicks>
 
-1. Have you experienced mysterious production issues that turned out to be clock-related?
+1. Anyone debugged a weird production issue that ended up being clock drift? What was it?
 
-2. How does your team handle network timeouts today?
+2. What timeout values does your team use? How did you arrive at them?
 
-3. What's the longest outage you've seen from a "simple" infrastructure failure?
+3. What's your favorite "one typo took down production" story?
 
 </v-clicks>
 
