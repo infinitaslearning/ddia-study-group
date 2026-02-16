@@ -1,17 +1,16 @@
-# The Trouble with Distributed Systems
+<!-- # The Trouble with Distributed Systems -->
 
 <div class="text-center mt-20">
 <div class="text-6xl mb-8">💀</div>
-<p class="text-2xl text-gray-400">Everything that can go wrong, will go wrong</p>
-<p class="text-lg text-gray-500 mt-4">Chapter 8: Networks, Clocks & Partial Failures</p>
+<p class="text-2xl text-gray-400">"Everything that can go wrong, will go wrong"</p>
+<p class="text-lg text-gray-500 mt-4">Networks, Clocks & Partial Failures</p>
 </div>
 
 <!--
-Welcome to Chapter 8: The Trouble with Distributed Systems.
 
 This is the most pessimistic chapter in the book.
 
-Today we'll cover unreliable networks, unreliable clocks, and why partial failures make everything hard.
+We'll cover unreliable networks, unreliable clocks, and why partial failures make everything hard.
 -->
 
 ---
@@ -19,26 +18,22 @@ Today we'll cover unreliable networks, unreliable clocks, and why partial failur
 # A Pessimistic Worldview
 
 <div class="grid grid-cols-2 gap-8 mt-8">
-<div>
+   <div>
 
 <v-clicks>
 
-- In distributed systems: **suspicion, pessimism, and paranoia pay off**
-- You cannot trust anything:
-  - Not the network
-  - Not the clocks
-  - Not other nodes
+- "In distributed systems: **suspicion, pessimism, and paranoia pay off**"
+- Assume components can be slow or faulty:
+  - the network
+  - the clocks
+  - other nodes
 - **Partial failures** are the norm, not the exception
 
 </v-clicks>
 
-</div>
+   </div>
 <div class="flex items-center justify-center">
 
-<div class="text-center">
-<div class="text-8xl">🔥🐕🔥</div>
-<p class="text-sm text-gray-400 mt-4">"This is fine"</p>
-</div>
 
 </div>
 </div>
@@ -48,55 +43,9 @@ The key mindset for this chapter: assume everything is broken.
 
 [click] In distributed systems, suspicion, pessimism, and paranoia pay off.
 
-[click] You cannot trust anything. Not the network. Not the clocks. Not other nodes.
+[click] Assume components can be slow or faulty: the network, clocks, other nodes.
 
 [click] Partial failures are the norm. Unlike a single computer where things work or don't, distributed systems can be partially working and partially failing at the same time.
--->
-
----
-
-# What We'll Cover
-
-<div class="mt-8">
-
-<v-clicks>
-
-### 1. Unreliable Networks
-- Why you can't trust network requests
-- Timeouts and their limitations
-- Congestion and queueing
-
-### 2. Unreliable Clocks
-- Time-of-day clocks vs Monotonic clocks
-- Clock drift and NTP synchronization
-- Why you can't rely on timestamps
-
-</v-clicks>
-
-</div>
-
-<!--
-We're covering the first half of Chapter 8.
-
-[click] First: unreliable networks. Why you can't trust requests, timeouts, and where delays come from.
-
-[click] Second: unreliable clocks. The two types of clocks, how they drift, and why timestamps are dangerous.
--->
-
----
-layout: section
----
-
-# Part 1: Unreliable Networks
-
-<p class="text-gray-400">The internet is a hostile environment</p>
-
-<!--
-Let's start with networks.
-
-The internet was designed to be resilient. Packets take different routes, nodes can fail.
-
-But this flexibility has a cost: no guarantees about delivery or timing.
 -->
 
 ---
@@ -135,7 +84,7 @@ But this flexibility has a cost: no guarantees about delivery or timing.
      │   ◄──?── Response  │
      │                    │
 
-  "Did it work? 🤷"
+   "No response ≠ failed request"
 ```
 
 </v-click>
@@ -165,7 +114,7 @@ When you send a network request, many things can happen.
 
 ---
 
-# The Unknown Unknown
+# Ambiguous Outcomes
 
 <div class="mt-8">
 
@@ -188,14 +137,14 @@ When you send a network request, many things can happen.
 
 **They all look the same:** No response → Timeout
 
-The only way to know if something succeeded: **get a positive acknowledgment**
+A positive acknowledgment can reduce uncertainty (but lack of one is still ambiguous)
 
 </div>
 
 </v-click>
 
 <!--
-This is the "unknown unknown" problem.
+This is an ambiguous-outcome problem.
 
 The sender cannot distinguish between:
 
@@ -209,13 +158,13 @@ The sender cannot distinguish between:
 
 [click] They all look the same: silence. No response. You wait, then timeout.
 
-The only way to know something succeeded is to get a positive acknowledgment back.
+A positive acknowledgment can confirm success, but lack of one remains ambiguous.
 -->
 
 
 ---
 
-# Timeouts: Our Only Tool
+# Timeouts: The Default Failure Detector
 
 <div class="mt-8">
 
@@ -223,7 +172,7 @@ The only way to know something succeeded is to get a positive acknowledgment bac
 
 <v-clicks>
 
-- **Too short:** False positives - declare nodes dead when they're just slow
+- **Too short:** False positives - suspect slow nodes as failed
 - **Too long:** Users wait forever, system appears hung
 
 </v-clicks>
@@ -254,13 +203,15 @@ The only way to know something succeeded is to get a positive acknowledgment bac
 </v-click>
 
 <!--
-Timeouts are our only tool for detecting failures. How long do you wait before giving up?
+Timeouts are the default tool for detecting failures. How long do you wait before giving up?
 
-[click] Too short: you get false positives. You declare nodes dead when they're just slow.
+[click] Too short: you get false positives. You treat “slow” as “dead” and trigger retries/failovers.
 
 [click] Too long: users wait forever. Your system feels hung.
 
-[click] Let me break down the specific risks. On the left: cascading failures, unnecessary failovers, retry storms. On the right: poor user experience, slow failure detection, resource starvation. There's no perfect answer.
+[click] Let me break down the specific risks. On the left: cascading failures, unnecessary failovers, retry storms. On the right: poor user experience, slow failure detection, resource starvation.
+
+In practice: pick a timeout based on what you observe in real response times, then revisit it as conditions change.
 -->
 
 ---
@@ -269,7 +220,7 @@ Timeouts are our only tool for detecting failures. How long do you wait before g
 
 <div class="text-center mt-4 text-xl">
 
-**Async networks provide NO guarantee on maximum delay**
+**Async networks provide no reliable maximum delay bound**
 
 </div>
 
@@ -297,18 +248,18 @@ Timeouts are our only tool for detecting failures. How long do you wait before g
 
 <div class="mt-4 text-sm">
 
-**Queueing happens at EVERY step:** network switches, routers, OS buffers, hypervisors, receiving application
+**Queueing can happen at many steps:** network switches, routers, OS buffers, hypervisors, receiving application
 
 </div>
 
 </v-click>
 
 <!--
-The internet is a packet-switched network. There are NO guarantees about timing.
+The internet is a packet-switched network. There are no hard guarantees about timing.
 
 [click] Look at the journey of a packet. It goes through your app, OS buffer, network card, switch queues, routers, more switches, back through OS buffers, finally to the receiving app.
 
-[click] Queueing happens at EVERY step. Network switches, routers, OS buffers, hypervisors, the receiving application. All these delays are variable and unpredictable. That's why we can't pick a "correct" timeout.
+[click] Queueing can happen at many steps. Network switches, routers, OS buffers, hypervisors, the receiving application. These delays are variable and unpredictable — which is why picking a "correct" timeout is impossible.
 -->
 
 ---
@@ -380,14 +331,14 @@ Let's go deeper on where delays come from.
 
 <div class="mt-8">
 
-**Why does video streaming use UDP instead of TCP?**
+**Why do real-time apps often use UDP instead of TCP?**
 
 <v-clicks>
 
 - TCP guarantees delivery by **retransmitting** lost packets
-- For video: a 100ms old frame is **useless**
+- For real-time media: an old packet is often **useless**
 - Better to skip the frame than delay the stream
-- UDP: "Fire and forget" - no retransmission, no ordering, no delay
+- UDP: "Fire and forget" - no retransmission, no ordering, no retransmission-induced delay
 
 </v-clicks>
 
@@ -395,7 +346,7 @@ Let's go deeper on where delays come from.
 
 <v-click>
 
-<div class="mt-6 p-4 bg-gray-800 rounded-lg">
+<div class="mt-6 p-4 bg-gray-200 rounded-lg">
 
 **Trade-off:**
 - TCP: Reliable but unpredictable latency
@@ -408,17 +359,17 @@ Choose based on what matters more to your application.
 </v-click>
 
 <!--
-By the way — why does video streaming use UDP instead of TCP?
+Why do real-time apps often use UDP instead of TCP?
 
 [click] TCP guarantees delivery by retransmitting lost packets.
 
-[click] For video, a 100ms old frame is useless. The video has moved on.
+[click] For real-time media, a late packet is often useless. The conversation/game has moved on.
 
 [click] Better to skip the frame than delay the stream.
 
-[click] UDP is "fire and forget". No retransmission, no ordering, no delay.
+[click] UDP is "fire and forget" at the transport layer: no retransmission, no in-order delivery. Network delay still exists — you’re just not adding extra delay by waiting for missing packets.
 
-[click] It's a trade-off. TCP: reliable but unpredictable latency. UDP: predictable latency but potential data loss. VoIP, gaming, streaming all use UDP for this reason.
+[click] It's a trade-off. TCP: reliable but latency can spike under loss. UDP: lower latency variance, but you must tolerate loss.
 -->
 
 ---
@@ -429,9 +380,13 @@ By the way — why does video streaming use UDP instead of TCP?
 
 **Static timeouts are suboptimal - conditions change!**
 
-<v-clicks>
+<v-click>
 
 **Solution: Adapt based on observed behavior**
+
+</v-click>
+
+<v-clicks>
 
 - Measure response times over time
 - Track variance, not just average
@@ -465,8 +420,8 @@ Static timeouts are suboptimal. Network conditions change!
 <v-clicks>
 
 - Dedicated bandwidth per call
-- **Guaranteed** capacity end-to-end
-- Fixed latency (bounded delay)
+- Reserved capacity end-to-end
+- More predictable latency (bounded delay in principle)
 - Inefficient: bandwidth wasted when silent
 
 </v-clicks>
@@ -492,7 +447,7 @@ Static timeouts are suboptimal. Network conditions change!
 
 <div class="mt-6 p-4 bg-blue-900/30 rounded-lg text-center">
 
-The internet **chose** to be unreliable in exchange for efficiency
+Packet switching trades strict guarantees for flexibility and efficiency
 
 </div>
 
@@ -505,9 +460,9 @@ Phone networks are circuit-switched.
 
 [click] Dedicated bandwidth per call.
 
-[click] Guaranteed capacity end-to-end.
+[click] Reserved capacity end-to-end.
 
-[click] Fixed latency - bounded delay.
+[click] More predictable latency - bounded delay in principle.
 
 [click] But inefficient: bandwidth wasted when you're silent.
 
@@ -519,7 +474,7 @@ Phone networks are circuit-switched.
 
 [click] But efficient: only use what you need.
 
-[click] The internet CHOSE to be unreliable in exchange for efficiency. It was a deliberate design decision.
+[click] Packet switching trades strict guarantees for flexibility and efficiency — great for utilization, but it means delays are variable.
 -->
 
 ---
@@ -671,13 +626,13 @@ Clocks serve two purposes in distributed systems.
 
 <v-click>
 
-<div class="mt-6 p-4 bg-gray-800 rounded-lg">
+<div class="mt-6 p-4 bg-gray-200 rounded-lg">
 
 **Clock Drift**
 
 ```
-Typical drift: ~35ms per day (good crystal)
-Worst case:   ~17 seconds per day (cheap crystal or temperature variations)
+Typical drift: ~1–10 seconds per day (commodity hardware)
+Worst case:   tens of seconds per day (temperature, cheap crystal, aging)
 
 Over a month: Could be off by minutes!
 ```
@@ -697,7 +652,7 @@ Every computer has a quartz crystal oscillator.
 
 [click] The problem: they drift!
 
-[click] Think of it like a cheap wristwatch — runs a bit fast or slow. A good crystal drifts ~35ms per day. A cheap one, or one baking in a hot server room, might drift 17 SECONDS per day. Leave a server running for a month without sync? Minutes off.
+[click] Think of it like a cheap wristwatch — runs a bit fast or slow. A decent clock might drift a few seconds per day; bad hardware or bad conditions can be much worse. Leave a server running for a month without sync? Minutes off.
 -->
 
 ---
@@ -755,7 +710,7 @@ NTP - Network Time Protocol - is how computers synchronize their clocks.
 
 [click] Here's how it works visually. Your computer asks "what time is it?" The NTP server responds. You adjust your clock, accounting for network delay.
 
-[click] But there are problems. Network delays vary. Leap seconds cause jumps. Misconfigured servers exist. NTP gets you within tens of milliseconds. Not bad, but in distributed systems, that can matter.
+[click] But there are problems. Network delays vary. Leap seconds cause jumps. Misconfigured servers exist. On a LAN you might get millisecond-ish accuracy; across the internet it can be tens of milliseconds (or worse).
 -->
 
 ---
@@ -821,7 +776,7 @@ Time-of-day clocks return "wall clock" time. What you'd see on a clock.
 - `System.nanoTime()` (Java)
 - `performance.now()` (JavaScript)
 - `time.monotonic()` (Python)
-- **Guaranteed to always move forward**
+- Not stepped by NTP (shouldn't go backward)
 - Not tied to wall-clock time
 
 </v-clicks>
@@ -861,7 +816,7 @@ Monotonic clocks are different. Designed for measuring elapsed time.
 
 [click] In Python: time.monotonic.
 
-[click] Guaranteed to always move forward.
+[click] Not stepped by NTP, so it shouldn’t jump backwards.
 
 [click] Not tied to wall-clock time, only differences matter.
 
@@ -880,8 +835,8 @@ Monotonic clocks are different. Designed for measuring elapsed time.
 
 - Compare node clocks against NTP servers regularly
 - Track drift over time
-- **If a node drifts too far → declare it dead**
-- Remove from cluster before it causes damage
+- **If a node drifts too far → quarantine it**
+- Remove it from serving before it violates assumptions
 
 </v-clicks>
 
@@ -910,7 +865,7 @@ If your system relies on clocks, monitor them.
 
 [click] Track drift over time.
 
-[click] If a node drifts too far, declare it dead.
+[click] If a node drifts too far, quarantine it.
 
 [click] Remove from cluster before it causes damage.
 
@@ -947,8 +902,8 @@ TrueTime.now() → [earliest, latest]
 
 - Returns a confidence interval, not a single timestamp
 - Spanner **waits out the uncertainty** before committing
-- If intervals of two events don't overlap → guaranteed ordering
-- Only Spanner implements this (requires GPS + atomic clocks in datacenters)
+- If intervals of two events don't overlap → you can infer ordering
+- Canonical example: Spanner (requires GPS + atomic clocks in datacenters)
 
 </div>
 
@@ -963,9 +918,9 @@ So we can't know the exact time — only an approximation.
 
 [click] "The time is somewhere between earliest and latest."
 
-[click] Google Spanner's TrueTime API actually exposes this. Returns a confidence interval instead of a timestamp. Spanner waits out the uncertainty before committing — if intervals don't overlap, you've got guaranteed ordering.
+[click] Google Spanner's TrueTime API exposes this. Returns a confidence interval instead of a timestamp. Spanner waits out the uncertainty before committing — if intervals don't overlap, you can infer a real-time order.
 
-The catch? Only Spanner does this. Requires GPS and atomic clocks in every datacenter. For everyone else, timestamps across machines remain unreliable.
+The catch? This requires specialized time infrastructure (GPS + atomic clocks) and careful engineering. For everyone else, timestamps across machines remain unreliable.
 -->
 
 ---
@@ -980,7 +935,7 @@ The catch? Only Spanner does this. Requires GPS and atomic clocks in every datac
 ├─────────────────────────┼────────────────────────┼────────────────────────┤
 │ Purpose                 │ "What time is it?"     │ "How long did it take?"│
 ├─────────────────────────┼────────────────────────┼────────────────────────┤
-│ Can jump?               │ YES (NTP adjustments)  │ NO (always forward)    │
+│ Can jump?               │ YES (NTP adjustments)  │ NO (not stepped by NTP)│
 ├─────────────────────────┼────────────────────────┼────────────────────────┤
 │ Comparable across       │ Yes (if synced)        │ NO                     │
 │ machines?               │                        │                        │
@@ -989,7 +944,7 @@ The catch? Only Spanner does this. Requires GPS and atomic clocks in every datac
 ├─────────────────────────┼────────────────────────┼────────────────────────┤
 │ Use for duration?       │ ⨯ Never                │ ✔︎ Yes                  │
 ├─────────────────────────┼────────────────────────┼────────────────────────┤
-│ Precision               │ Milliseconds           │ Nanoseconds            │
+│ Resolution (API)        │ ms-scale               │ high-resolution        │
 └─────────────────────────┴────────────────────────┴────────────────────────┘
 ```
 
