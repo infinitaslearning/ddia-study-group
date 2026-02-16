@@ -129,7 +129,7 @@ src: ./pages/chapter-7-discussion.md
 ---
 <!-- Chapter 7 End -->
 
-<!-- Chapter 3 Start -->
+<!-- Chapter 8 Start -->
 ---
 class: text-center
 layout: cover
@@ -149,4 +149,8 @@ src: ./pages/chapter-8-1.md
 src: ./pages/chapter-8-2.md
 ---
 
-<!-- Chapter 3 End -->
+---
+src: ./pages/chapter-8-discussion.md
+---
+
+<!-- Chapter 8 End -->
