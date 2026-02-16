@@ -1,3 +1,9 @@
+# Time for a challenge, who will win?
+
+<img src="../assets/chapter08/quiz.png" alt="Quiz" class="w-80 center m-auto"/>
+
+---
+
 # Discussion
 
 <div class="mt-12 text-center">
