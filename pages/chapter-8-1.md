@@ -92,6 +92,16 @@ The key mindset for this chapter: assume everything is broken.
 </div>
 </div>
 
+<v-click>
+
+<div class="mt-4 p-4 bg-red-900/30 rounded-lg">
+
+**From the sender's perspective:** lost request, crashed node, slow node, lost response — they all look the same: **silence**.
+
+</div>
+
+</v-click>
+
 <!--
 When you send a network request, many things can happen.
 
@@ -109,70 +119,25 @@ When you send a network request, many things can happen.
 
 [click] Or the response is delayed.
 
-[click] And here's the thing — from the sender's perspective, you often can't tell which one happened. All you know is: no response.
--->
+[click] And here's the thing — from the sender's perspective, all these failures look identical. You can't tell. All you get is silence. No response. That's it.
 
----
-
-# Ambiguous Outcomes
-
-<div class="mt-8">
-
-**The sender cannot distinguish between:**
-
-<v-clicks>
-
-- The request was lost
-- The remote node is down
-- The remote node is slow
-- The response was lost
-
-</v-clicks>
-
-</div>
-
-<v-click>
-
-<div class="mt-8 p-4 bg-red-900/30 rounded-lg">
-
-**They all look the same:** No response → Timeout
-
-A positive acknowledgment can reduce uncertainty (but lack of one is still ambiguous)
-
-</div>
-
-</v-click>
-
-<!--
-This is an ambiguous-outcome problem.
-
-The sender cannot distinguish between:
-
-[click] The request was lost.
-
-[click] The remote node is down.
-
-[click] The remote node is just slow.
-
-[click] The response was lost.
-
-[click] They all look the same: silence. No response. You wait, then timeout.
-
-A positive acknowledgment can confirm success, but lack of one remains ambiguous.
+So what's our only option? We need some mechanism to eventually give up and declare failure...
 -->
 
 
 ---
 
-# Timeouts: The Default Failure Detector
+# Timeouts: Our Only Tool
 
 <div class="mt-8">
 
-**Problem:** How long do you wait before giving up?
+**Since all failures look like silence, our only option is to wait... then give up.**
+
+But how long do you wait?
 
 <v-clicks>
 
-- **Too short:** False positives - suspect slow nodes as failed
+- **Too short:** False positives — suspect slow nodes as failed
 - **Too long:** Users wait forever, system appears hung
 
 </v-clicks>
@@ -203,15 +168,15 @@ A positive acknowledgment can confirm success, but lack of one remains ambiguous
 </v-click>
 
 <!--
-Timeouts are the default tool for detecting failures. How long do you wait before giving up?
+Since we can't tell what went wrong, the only option left is to wait... and eventually give up. That's a timeout.
 
-[click] Too short: you get false positives. You treat “slow” as “dead” and trigger retries/failovers.
+[click] Too short: you get false positives. You treat "slow" as "dead" and trigger retries/failovers.
 
 [click] Too long: users wait forever. Your system feels hung.
 
 [click] Let me break down the specific risks. On the left: cascading failures, unnecessary failovers, retry storms. On the right: poor user experience, slow failure detection, resource starvation.
 
-In practice: pick a timeout based on what you observe in real response times, then revisit it as conditions change.
+So picking the right timeout is critical. But here's the thing — it's actually impossible to pick a "correct" one. Let me show you why...
 -->
 
 ---
@@ -220,7 +185,7 @@ In practice: pick a timeout based on what you observe in real response times, th
 
 <div class="text-center mt-4 text-xl">
 
-**Async networks provide no reliable maximum delay bound**
+**Why can't we just pick the "right" timeout? Because async networks have no maximum delay bound.**
 
 </div>
 
@@ -255,59 +220,45 @@ In practice: pick a timeout based on what you observe in real response times, th
 </v-click>
 
 <!--
-The internet is a packet-switched network. There are no hard guarantees about timing.
+We just said picking a timeout is hard. Here's why — there's no guaranteed maximum delay.
 
 [click] Look at the journey of a packet. It goes through your app, OS buffer, network card, switch queues, routers, more switches, back through OS buffers, finally to the receiving app.
 
-[click] Queueing can happen at many steps. Network switches, routers, OS buffers, hypervisors, the receiving application. These delays are variable and unpredictable — which is why picking a "correct" timeout is impossible.
+[click] Queueing can happen at many steps. Network switches, routers, OS buffers, hypervisors, the receiving application. These delays are variable and unpredictable.
+
+Let's look at exactly where packets get stuck...
 -->
 
 ---
 
-# Congestion & Queueing in Detail
+# Congestion & Queueing: Where Packets Get Stuck
 
-<div class="grid grid-cols-2 gap-8 mt-4">
-<div>
+<div class="mt-4">
 
-**Where packets get delayed:**
+**Every hop is a potential delay point:**
 
 <v-clicks>
 
-1. **Network switch** - if port is busy, packets queue (or drop!)
-2. **OS kernel** - incoming data buffered before app reads it
-3. **Virtualized environments** - VM might be paused while others run
-4. **TCP flow control** - sender limits rate when receiver is slow
-5. **Receiving application** - GC pauses, busy threads
+1. **Network switch** — if port is busy, packets queue (or get dropped!)
+2. **OS kernel** — incoming data buffered before app reads it
+3. **Virtualized environments** — VM might be paused while others run
+4. **TCP flow control** — sender limits rate when receiver is slow
+5. **TCP congestion control** — detects packet loss, slows down. Good for the network, bad for your latency
+6. **Receiving application** — GC pauses, busy threads
 
 </v-clicks>
 
 </div>
-<div>
 
 <v-click>
 
-**TCP congestion control**
+<div class="mt-4 p-4 bg-yellow-900/30 rounded-lg">
 
-```
-Packet loss detected
-       │
-       ▼
-    Reduce  ◄────────────┐
-    send rate            │
-       │                 │
-       ▼                 │
-   Slowly ──► Loss? ─Yes─┘
-   increase      │
-    rate        No
-       │         │
-       ▼         ▼
-    Continue  Continue
-```
+TCP adds even more delay through **retransmission** — when packets are lost, it resends them. What if we just... don't?
+
+</div>
 
 </v-click>
-
-</div>
-</div>
 
 <!--
 Let's go deeper on where delays come from.
@@ -320,9 +271,11 @@ Let's go deeper on where delays come from.
 
 [click] TCP flow control limits the sender when the receiver is slow.
 
-[click] The receiving application might be doing garbage collection. Java GC pauses can be 100ms or more.
+[click] TCP also has built-in congestion control. When it detects packet loss, it slows down.
 
-[click] And TCP has built-in congestion control. When it detects packet loss, it slows down. Good for the network, bad for your latency.
+[click] And the receiving application might be doing garbage collection. Java GC pauses can be 100ms or more.
+
+[click] On top of all this, TCP retransmits lost packets — adding even more delay. Which leads to an interesting question: what if we just skip retransmission entirely?
 -->
 
 ---
@@ -346,7 +299,7 @@ Let's go deeper on where delays come from.
 
 <v-click>
 
-<div class="mt-6 p-4 bg-gray-200 rounded-lg">
+<div class="mt-6 p-4 bg-gray-400 rounded-lg">
 
 **Trade-off:**
 - TCP: Reliable but unpredictable latency
@@ -378,7 +331,7 @@ Why do real-time apps often use UDP instead of TCP?
 
 <div class="mt-8">
 
-**Static timeouts are suboptimal - conditions change!**
+**Whether TCP or UDP, delays remain variable. Static timeouts can't keep up.**
 
 <v-click>
 
@@ -388,7 +341,7 @@ Why do real-time apps often use UDP instead of TCP?
 
 <v-clicks>
 
-- Measure response times over time
+- Measure response times over an extended period
 - Track variance, not just average
 - Adjust timeout dynamically
 
@@ -397,22 +350,26 @@ Why do real-time apps often use UDP instead of TCP?
 </div>
 
 <!--
-Static timeouts are suboptimal. Network conditions change!
+Whether you use TCP or UDP, delays are variable. A static timeout will always be wrong — either too aggressive or too conservative.
 
 [click] The solution: adapt based on observed behavior.
 
-[click] Measure response times over time.
+[click] Measure response times over an extended period, not just recent ones.
 
-[click] Track variance, not just average.
+[click] Track variance, not just average. A p99 spike matters more than the mean.
 
 [click] Adjust timeout dynamically.
+
+But this raises a deeper question: WHY do we need dynamic timeouts at all? Why can't the network just guarantee bounded delay? That brings us to how networks are fundamentally designed...
 -->
 
 ---
 
 # Synchronous vs Asynchronous Networks
 
-<div class="grid grid-cols-2 gap-8 mt-8">
+<div class="text-sm text-gray-400 mb-4">Why can't the network just guarantee bounded delay?</div>
+
+<div class="grid grid-cols-2 gap-8">
 <div>
 
 **Phone Networks (Circuit-switched)**
@@ -454,7 +411,7 @@ Packet switching trades strict guarantees for flexibility and efficiency
 </v-click>
 
 <!--
-Why is the internet unreliable? Compare it to phone networks.
+Why can't the network just guarantee bounded delay? Compare it to phone networks.
 
 Phone networks are circuit-switched.
 
@@ -526,6 +483,8 @@ QoS - Quality of Service - and Admission Control.
 [click] But in practice, almost nobody does this. Requires cooperation across networks. In cloud environments, you can't control your neighbor's traffic. Cost-benefit often doesn't work out.
 
 So we're stuck with unreliable networks. Build your systems accordingly.
+
+But networks aren't the only thing that's unreliable in distributed systems. There's another fundamental problem: machines can't even agree on what time it is.
 -->
 
 ---
@@ -535,79 +494,19 @@ layout: section
 # Unreliable Clocks
 
 <!--
-Now let's talk about clocks.
+We've accepted the network is unreliable. But there's another fundamental problem in distributed systems: machines can't even agree on what time it is.
 
-In a distributed system, "what time is it?" is a surprisingly hard question.
-
-Each machine has its own clock. They're not synchronized. They drift.
--->
-
----
-
-# Why Do We Need Clocks?
-
-<div class="grid grid-cols-2 gap-8 mt-8">
-<div>
-
-**Duration measurement**
-
-<v-clicks>
-
-- How long did this request take?
-- Has the timeout expired?
-- When should the cache entry expire?
-
-</v-clicks>
-
-</div>
-<div>
-
-**Points in time**
-
-<v-clicks>
-
-- When was this record created?
-- Which write happened first?
-- Is this certificate still valid?
-
-</v-clicks>
-
-</div>
-</div>
-
-<v-click>
-
-<div class="mt-8 p-4 bg-red-900/30 rounded-lg">
-
-**Problem:** Computers have two types of clocks, and both have issues
-
-</div>
-
-</v-click>
-
-<!--
-Clocks serve two purposes in distributed systems.
-
-[click] Duration measurement: How long did this request take?
-
-[click] Has the timeout expired?
-
-[click] When should cache expire?
-
-[click] Points in time: When was this record created?
-
-[click] Which write happened first?
-
-[click] Is this certificate still valid?
-
-[click] The problem: computers have TWO different kinds of clocks. They work differently. And both have issues.
+Each machine has its own clock. They're not synchronized. They drift. And as we'll see, this causes real problems.
 -->
 
 ---
 
 # How Computers Keep Time
 
-<div class="mt-8">
+<div class="grid grid-cols-2 gap-8 mt-4">
+<div>
+
+Distributed systems rely on clocks for **durations** (timeouts, latency) and **points in time** (ordering, validity). But how do computers actually keep time?
 
 **Quartz Crystal Oscillator**
 
@@ -620,37 +519,40 @@ Clocks serve two purposes in distributed systems.
 
 </v-clicks>
 
-</div>
-
 <v-click>
 
-<div class="mt-6 p-4 bg-gray-200 rounded-lg">
+<div class="mt-2 p-3 bg-gray-400 rounded-lg text-sm">
 
-**Clock Drift**
-
-```
-Typical drift: ~1–10 seconds per day (commodity hardware)
-Worst case:   tens of seconds per day (temperature, cheap crystal, aging)
-
-Over a month: Could be off by minutes!
-```
+**Clock Drift:** ~1 second/day (commodity hardware). Worse with temperature changes, cheap crystals, aging. Over a month: **minutes off!**
 
 </div>
 
 </v-click>
 
+</div>
+<div class="flex items-center justify-center">
+
+<img src="../assets/chapter08/quarz-oscillator.png" class="h-60 rounded-lg" />
+
+</div>
+</div>
+
 <!--
-Every computer has a quartz crystal oscillator.
+Distributed systems rely on clocks for two things: measuring durations (like timeouts) and pinning down points in time (like "which write happened first?").
+
+But how do computers actually keep time? With a quartz crystal oscillator. This is what one looks like.
+
+[click] Every computer has one.
 
 [click] It vibrates at a known frequency.
 
 [click] Count oscillations, track time.
 
-[click] Simple, but crystals aren't perfect.
+[click] But crystals aren't perfect. They drift!
 
-[click] The problem: they drift!
+[click] Think of it like a cheap wristwatch — runs a bit fast or slow. A decent clock might drift a few seconds per day; bad hardware or temperature changes can be much worse. Leave a server running for a month without sync? It could be minutes off.
 
-[click] Think of it like a cheap wristwatch — runs a bit fast or slow. A decent clock might drift a few seconds per day; bad hardware or bad conditions can be much worse. Leave a server running for a month without sync? Minutes off.
+So how do we fix this drift? NTP.
 -->
 
 ---
@@ -698,7 +600,7 @@ Every computer has a quartz crystal oscillator.
 </v-click>
 
 <!--
-NTP - Network Time Protocol - is how computers synchronize their clocks.
+NTP — Network Time Protocol — is how computers synchronize their clocks.
 
 [click] Connect to servers with accurate time, often GPS-based.
 
@@ -708,7 +610,9 @@ NTP - Network Time Protocol - is how computers synchronize their clocks.
 
 [click] Here's how it works visually. Your computer asks "what time is it?" The NTP server responds. You adjust your clock, accounting for network delay.
 
-[click] But there are problems. Network delays vary. Leap seconds cause jumps. Misconfigured servers exist. On a LAN you might get millisecond-ish accuracy; across the internet it can be tens of milliseconds (or worse).
+[click] But NTP has problems. Network delays vary. Leap seconds cause jumps. Misconfigured servers exist. On a LAN you might get millisecond-ish accuracy; across the internet it can be tens of milliseconds or worse.
+
+NTP syncs clocks, but WHICH clock exactly? Your computer actually has two very different types of clocks...
 -->
 
 ---
@@ -833,8 +737,8 @@ Monotonic clocks are different. Designed for measuring elapsed time.
 
 - Compare node clocks against NTP servers regularly
 - Track drift over time
-- **If a node drifts too far → quarantine it**
-- Remove it from serving before it violates assumptions
+- **If a node drifts too far → declare it dead**
+- Remove it from the cluster before it causes damage
 
 </v-clicks>
 
@@ -846,11 +750,11 @@ Monotonic clocks are different. Designed for measuring elapsed time.
 
 **The "recent" problem**
 
-What does "recent" mean? (e.g., "show posts from the last 5 minutes")
+What does "recent" mean? e.g., *"Is this distributed lock still valid?"* or *"Has this leader lease expired?"*
 
 It depends on the local time-of-day clock... which may be **wrong**!
 
-A node with a drifted clock might serve stale data thinking it's fresh.
+A node with a drifted clock might think it still holds a lock when it's already been reassigned to another node — causing **split-brain** or **data corruption**.
 
 </div>
 
@@ -863,11 +767,15 @@ If your system relies on clocks, monitor them.
 
 [click] Track drift over time.
 
-[click] If a node drifts too far, quarantine it.
+[click] If a node drifts too far, declare it dead and quarantine it.
 
-[click] Remove from cluster before it causes damage.
+[click] Remove it from the cluster before it causes damage.
 
-[click] Here's a tricky one: the "recent" problem. What does "recent" mean? "Show posts from the last 5 minutes." It depends on the local clock. Which may be wrong! A node with a drifted clock might serve stale data thinking it's fresh.
+[click] Here's where it gets dangerous: the "recent" problem. What does "recent" mean? Think about distributed locks: "Is this lock still valid?" or leader leases: "Am I still the leader?"
+
+These depend on the local clock. A node with a drifted clock might think it still holds a lock when another node has already taken over — causing split-brain or data corruption.
+
+So if timestamps are unreliable, how can we order events across machines?
 -->
 
 ---
@@ -876,13 +784,13 @@ If your system relies on clocks, monitor them.
 
 <div class="mt-8">
 
-**Problem:** We can't know the exact time, only an approximation
+**If timestamps are unreliable, how can we order events across machines?**
 
 <v-clicks>
 
-- NTP gives time ± some error margin
-- Instead of a point in time, think of a **range**
-- "The time is somewhere between [earliest, latest]"
+- We can't know the exact time — only an **approximation**
+- Instead of pretending we know the exact time, **expose the uncertainty**
+- Think of time as a **range**: [earliest, latest]
 
 </v-clicks>
 
@@ -898,27 +806,34 @@ If your system relies on clocks, monitor them.
 TrueTime.now() → [earliest, latest]
 ```
 
-- Returns a confidence interval, not a single timestamp
-- Spanner **waits out the uncertainty** before committing
-- If intervals of two events don't overlap → you can infer ordering
-- Canonical example: Spanner (requires GPS + atomic clocks in datacenters)
+Example: TrueTime says **[10:00:00.003, 10:00:00.007]**
+
+- The real time is **guaranteed** to be within this range
+- Before committing, Spanner **waits until `latest` has passed** (10:00:00.007)
+- Any future transaction will get a timestamp **after** that → **real ordering guarantee**
+- If intervals of two events don't overlap → you know which happened first
+- Requires GPS + atomic clocks in datacenters
 
 </div>
 
 </v-click>
 
 <!--
-So we can't know the exact time — only an approximation.
+If timestamps are unreliable, how can we order events across machines?
 
-[click] NTP gives you time plus or minus some error margin.
+[click] We can't know the exact time — only an approximation.
 
-[click] Instead of a single point, think of it as a range.
+[click] Google's insight: instead of pretending we know the exact time, expose the uncertainty.
 
-[click] "The time is somewhere between earliest and latest."
+[click] Think of time as a range, not a point. "The real time is somewhere between earliest and latest."
 
-[click] Google Spanner's TrueTime API exposes this. Returns a confidence interval instead of a timestamp. Spanner waits out the uncertainty before committing — if intervals don't overlap, you can infer a real-time order.
+[click] Google Spanner's TrueTime API does exactly this. It returns a confidence interval.
 
-The catch? This requires specialized time infrastructure (GPS + atomic clocks) and careful engineering. For everyone else, timestamps across machines remain unreliable.
+For example: TrueTime says the time is between 10:00:00.003 and 10:00:00.007. Spanner waits until 10:00:00.007 before committing. This way, any future transaction will get a timestamp after that point — giving us a real ordering guarantee.
+
+If the intervals of two events don't overlap, you can determine which one happened first.
+
+The catch? This requires GPS receivers and atomic clocks in every datacenter. For everyone else, timestamps across machines remain unreliable.
 -->
 
 ---
