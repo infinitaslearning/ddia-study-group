@@ -128,3 +128,29 @@ src: ./pages/chapter-7-irl-2.md
 src: ./pages/chapter-7-discussion.md
 ---
 <!-- Chapter 7 End -->
+
+<!-- Chapter 8 Start -->
+---
+class: text-center
+layout: cover
+---
+
+# DDIA Study Group
+
+Chapter 8
+
+## The Trouble with Distributed Systems
+
+---
+src: ./pages/chapter-8-1.md
+---
+
+---
+src: ./pages/chapter-8-2.md
+---
+
+---
+src: ./pages/chapter-8-discussion.md
+---
+
+<!-- Chapter 8 End -->
