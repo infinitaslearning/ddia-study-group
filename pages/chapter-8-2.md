@@ -8,29 +8,42 @@ Part 2
 
 <v-clicks>
 
-- “stop-the-world” GC pauses have sometimes been known to last for several minutes
+- “stop-the-world” GC pauses 😱 several minutes 😱
 - a virtual machine can be suspended and resumed
 - the user closes the lid of their laptop
 - context-switches, hypervisor switches to a different virtual machine
 - the CPU time spent in other virtual machines is known as _steal time_
 - waiting for a slow disk I/O operation
-- I/O pauses and GC pauses may even conspire to combine their delays
+- I/O + GC conspiration
 - swapping to disk (paging)
 - SIGSTOP signal
 
 </v-clicks>
 
+<v-click>
+
+```csharp
+builder.Services.AddILDelayedShutDown();
+```
+
+</v-click>
+
+<!--
+We are using Delayed shutdown to be sure il observability package can export its collected data.
+-->
+
 ---
 
-<div class="flex items-center justify-center">
+<div class="w-full h-full flex flex-col items-center justify-center gap-18 text-center">
 
-**Can’t assume anything about timing, because arbitrary context switches and parallelism may occur.**
+<div class="font-bold">
+Can’t assume anything about timing, because arbitrary context switches and parallelism may occur.
 
 </div>
 
-<div class="flex items-center justify-center">
-
-**Distributed system has no shared memory—only messages sent over an unreliable network**
+<div class="font-bold">
+Distributed system has no shared memory—only messages sent over an unreliable network
+</div>
 
 </div>
 
@@ -40,24 +53,52 @@ Part 2
 
 ---
 
-## Hard real-time systems (control aircraft, rockets, robots, cars, etc.)
+## Hard real-time systems
 
 <div class="mt-6 p-4 bg-blue-900/30 rounded-lg">
 There is a specified deadline by which the software must respond;
 if it doesn’t meet the deadline, that may cause a failure of the entire system.
 </div>
 
+<v-clicks>
+
+- real-time operating system (RTOS)
+- documentation on worst-case execution times
+- restrict/disallow dynamic memory allocation
+- testing, measurement, testing, measurement, testing, measurement...
+
+</v-clicks>
+
 <v-click>
-💸 Very expensive, and they are most commonly used in safety-critical embedded devices
+<div class="mt-6">
+💸 Very expensive, and they are most commonly used in safety-critical embedded devices like aircraft control, rockets, robots, cars.
+</div>
 </v-click>
+
+<!--
+Providing real-time guarantees in a system requires support from all levels of the
+software stack
+-->
 
 ---
 
 # Limiting the impact of garbage collection
 
-1. Treat GC pauses like brief planned outages of a node, and to let other nodes handle requests
+<div class="w-full h-full flex flex-col justify-center gap-16">
 
+<div class="font-bold">
+1. Treat GC pauses like brief planned outages of a node, and to let other nodes handle requests
+</div>
+
+<div class="font-bold">
 2. Use the garbage collector only for short-lived objects and restart processes periodically
+</div>
+
+</div>
+
+<!--
+Is there anybody who is using 1st or 2nd approach in our services?
+-->
 
 ---
 
@@ -160,11 +201,7 @@ chains
 - software bugs
 - misconfiguration
 
-</v-clicks>
-
 ## Simple and pragmatic steps toward better reliability
-
-<v-clicks>
 
 - checksums in the application-level protocol
 - some basic sanity-checking of values
@@ -176,7 +213,7 @@ chains
 
 # System Model and Reality
 
-> formalize the kinds of faults that we expect to happen in a system
+### Formalize the kinds of faults that we expect to happen in a system
 
 <div class="grid grid-cols-3 gap-8 mt-4">
 
@@ -199,7 +236,7 @@ chains
   the time
 - sometimes exceeds the bounds for network delay, process pauses, clock drift
 
-**Realistic model of many system**
+**Realistic model of many systems**
 
 </div>
 
@@ -220,7 +257,6 @@ chains
 ---
 
 ## System models for node failures
-
 
 <div class="grid grid-cols-3 gap-8 mt-4">
 
@@ -260,7 +296,7 @@ chains
 
 <div>
 
-## Safety property
+## 💂 Safety property
 
 - we can point at a particular point in time at which it was broken
 - violation cannot be undone
@@ -271,7 +307,7 @@ Always hold these properties and does not return wrong result
 
 <div>
 
-## Liveness property
+## 🫀 Liveness property
 
 - it may not hold at some point in time
 - there is always hope that it may be satisfied in the future
@@ -281,3 +317,8 @@ Allow some caveats. e.g. eventual consistency
 </div>
 
 </div>
+
+<!--
+- Kubernetes cluster liveness probe
+- Healthchecks of services: what about degraded state? partially live
+-->
