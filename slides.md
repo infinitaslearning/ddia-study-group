@@ -154,3 +154,21 @@ src: ./pages/chapter-8-discussion.md
 ---
 
 <!-- Chapter 8 End -->
+
+<!-- Chapter 9 Start -->
+---
+class: text-center
+layout: cover
+---
+
+# DDIA Study Group
+
+Chapter 9
+
+## Consistency and Consensus
+
+---
+src: ./pages/chapter-9-2.md
+---
+
+<!-- Chapter 9 End -->
