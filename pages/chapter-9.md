@@ -1,6 +1,190 @@
 # Consistency and Consensus
 
-Part 2
+---
+
+# Summary of faults:
+
+- Network faults: packet can be lost, reodered, duplicated or delayed
+- Time faults: clocks are approximate, can skew, can be out of sync
+- Process faults: node can pause or crash (garbage collection)
+
+Goal: build abstractions that hide these faults and let programmers reason as if the system behaved normally (like transactions hide partial failures).
+
+---
+
+# Replication ⇒ inconsistency
+
+Any replicated system introduces temporary disagreement:
+- Updates reach replicas at different times
+- Reads may see different versions
+- Acknowledging a write does not mean all replicas applied it
+
+
+---
+
+# Eventual consistency
+
+Guarantee: if no new updates occur, all replicas will eventually converge
+
+Properties:
+- Reads might return stale data
+- No ordering guarantees across clients
+- Read after write is not guaranteed
+- Availability is prioritised
+
+
+---
+
+
+<img src="../assets/chapter09/ec.png" class="h-full m-auto rounded-lg" />
+
+---
+
+# Linearizability
+
+Guarantee: The system behaves as if there is only one copy of the data, updated atomically in real time.
+
+Properties:
+- After a write completes, all subsequent reads see it
+- Operations appear instantaneously applied at some point
+- Ordering is preserved across clients
+- Applies to single objects only
+
+Important distinction:
+- Linearizability: single object, real-time order
+- Serializability: transactions across multiple objects
+
+---
+
+# When linearizability matters
+
+Necessary for correctness when the latest state must be globally visible:
+- Leader election (avoid split brain)
+- Locks and coordination
+- Uniqueness constraints (usernames, IDs)
+- Financial balances
+- Counters that must never go backward
+
+Not necessary for:
+- Caches
+- Social feeds
+- Analytics
+- Final sports scores
+
+---
+
+# How to implement linearizable systems
+
+Single system
+- Single node holding all the data
+- No replication, no fault tolerance
+
+---
+
+# How to implement linearizable systems
+
+Replicated approaches
+  - Single leader replication: potentially linearizabile if:
+    - All the writes go through the leader
+    - Reads are served from the leader or synchronously updated replicas
+  - Multi leader replication: generally not linearizable
+    - Concurrent writes on different leaders require conflict resolution
+    - No global time ordering
+  - Leaderless replication: usually not serializable
+    - Writes go to multiple nodes independently
+    - Conflict are resolved after the fact
+    - Quorum reads/writes are not sufficient
+
+---
+
+# Quorum reads
+
+Quorum is about having at least one updated node in your reads. But it's only after the write is completed.
+
+<img src="../assets/chapter09/qr.png" class="w-100 rounded-lg" />
+
+Not guaranteed by quorum: all replicas are updated before reads.
+
+---
+
+# CAP Theorem
+
+                         [ Consistency ]
+                              /   \
+                             /     \
+                            /       \
+     works perfectly       /         \   Always correct
+     ultil partition      /           \  might refuse service
+                         /             \
+                        /               \
+         [ Availability ]----------------[ Partition Tolerance ]
+                          Continue to work
+                        data might be stale
+
+---
+
+### Cap Theorem
+You can't prevent network partitions
+
+During the partition, if both sides accept writes:
+- Availability stays high
+- Consistency can diverge (AP)
+
+If you block one side or reject requests:
+- Consistency preserved (CP)
+- Availability reduced
+
+---
+
+# Ordering
+
+Correct behavior often depends on ordering.
+
+Without ordering:
+- Replies before requests
+- Deletes before creates
+- Inconsistent histories
+
+Total order: All operation al globally ordered
+- Every node agree on the same sequence
+- Enables linearizability
+
+Causal order (partial order): Effects are seen after their causes
+- Concurrent independent operations may appear in different orders.
+- Much cheaper to implement, but weaker guarantees
+- Enables causal consistency (ie:messaging app)
+
+---
+
+# How to achieve causal consistency
+
+Need to track "happened-before" relationship
+
+Naive solutions:
+- Physical clocks
+- Separate counters per node
+- Preallocated sequence ranges
+All of these are better than sharing a single counter on a single leader, but have issues with causality
+
+---
+
+# Lamport timestamps
+
+Each event has:
+(timestamp, node_id)
+
+Rules:
+
+- Each node maintains a counter
+- Increment on every event
+- Include timestamp in messages
+- On receive: counter = max(local, received) + 1
+
+Tie-break using node ID.
+
+Produces a total order, but
+- total order != causal consistency, as we arbitrary pick what came first in case of conflicts
+- cannot rely just on having a total order "eventually" for things like username clashes (clients needs a response)
 
 ---
 
@@ -28,6 +212,10 @@ Part 2
 - Linearizable storage (e.g., ensuring only one user can claim a unique username)
 
 </v-clicks>
+
+<!--
+Fencing tokens = monotonically increasing numbers (e.g., sequence numbers or timestamps) issued by a lock service when a client acquires a lock
+-->
 
 ---
 
@@ -157,10 +345,14 @@ That’s why it’s called a **blocking atomic commit protocol**: if the coordin
 - XA is a C API (with bindings in many languages) for coordinating distributed transactions
 - Powerful, but it comes with tradeoffs because the **coordinator** (running on the application server) starts to look like a database component:
 - If it’s not replicated, it becomes a single point of failure (like we talked about above)
-- You can’t easily run the application server in a fully serverless/stateless way
+- You can’t easily run the application server in a fully serverless/stateless way, because the coordinator logs acts like a database
 - More involved systems must agree before commit → more places for something to fail
 
 </v-clicks>
+
+<!--
+🚨🚨🚨 Topic change after this slide 🚨🚨🚨
+-->
 
 ---
 
@@ -263,3 +455,11 @@ A node will vote in favor of a proposal only if it is not aware of any other lea
 - Some algorithms can even get into election loops under specific timing conditions
 
 </v-clicks>
+
+---
+
+
+<video class="w-100 rounded-lg mx-auto my-auto" autoplay muted loop playsinline>
+  <source src="../assets/chapter09/end.mp4" type="video/mp4" />
+  Your browser does not support the video tag.
+</video>
