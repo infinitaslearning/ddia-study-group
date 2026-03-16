@@ -166,6 +166,11 @@ layout: cover
 Chapter 9
 
 ## Consistency and Consensus
+
+---
+src: ./pages/chapter-9-1.md
+---
+
 ---
 src: ./pages/chapter-9-2.md
 ---
