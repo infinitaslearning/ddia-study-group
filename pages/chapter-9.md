@@ -1,7 +1,3 @@
-# Consistency and Consensus
-
----
-
 # Summary of faults:
 
 - Network faults: packet can be lost, reodered, duplicated or delayed
@@ -95,7 +91,7 @@ Replicated approaches
 - Multi leader replication: generally not linearizable
   - Concurrent writes on different leaders require conflict resolution
   - No global time ordering
-- Leaderless replication: usually not serializable
+- Leaderless replication: usually not linearializable
   - Writes go to multiple nodes independently
   - Conflict are resolved after the fact
   - Quorum reads/writes are not sufficient
@@ -178,7 +174,8 @@ Naive solutions:
 - Physical clocks
 - Separate counters per node
 - Preallocated sequence ranges
-  All of these are better than sharing a single counter on a single leader, but have issues with causality
+
+All of these are better than sharing a single counter on a single leader, but have issues with causality
 
 ---
 
