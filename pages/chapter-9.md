@@ -182,13 +182,13 @@ All of these are better than sharing a single counter on a single leader, but ha
 # Lamport timestamps
 
 Each event has:
-(timestamp, node_id)
+(counter, node_id)
 
 Rules:
 
 - Each node maintains a counter
 - Increment on every event
-- Include timestamp in messages
+- Include counter in messages
 - On receive: counter = max(local, received) + 1
 
 Tie-break using node ID.
