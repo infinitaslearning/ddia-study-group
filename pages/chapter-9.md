@@ -15,10 +15,10 @@ Goal: build abstractions that hide these faults and let programmers reason as if
 # Replication ⇒ inconsistency
 
 Any replicated system introduces temporary disagreement:
+
 - Updates reach replicas at different times
 - Reads may see different versions
 - Acknowledging a write does not mean all replicas applied it
-
 
 ---
 
@@ -27,14 +27,13 @@ Any replicated system introduces temporary disagreement:
 Guarantee: if no new updates occur, all replicas will eventually converge
 
 Properties:
+
 - Reads might return stale data
 - No ordering guarantees across clients
 - Read after write is not guaranteed
 - Availability is prioritised
 
-
 ---
-
 
 <img src="../assets/chapter09/ec.png" class="h-full m-auto rounded-lg" />
 
@@ -45,12 +44,14 @@ Properties:
 Guarantee: The system behaves as if there is only one copy of the data, updated atomically in real time.
 
 Properties:
+
 - After a write completes, all subsequent reads see it
 - Operations appear instantaneously applied at some point
 - Ordering is preserved across clients
 - Applies to single objects only
 
 Important distinction:
+
 - Linearizability: single object, real-time order
 - Serializability: transactions across multiple objects
 
@@ -59,6 +60,7 @@ Important distinction:
 # When linearizability matters
 
 Necessary for correctness when the latest state must be globally visible:
+
 - Leader election (avoid split brain)
 - Locks and coordination
 - Uniqueness constraints (usernames, IDs)
@@ -66,6 +68,7 @@ Necessary for correctness when the latest state must be globally visible:
 - Counters that must never go backward
 
 Not necessary for:
+
 - Caches
 - Social feeds
 - Analytics
@@ -76,6 +79,7 @@ Not necessary for:
 # How to implement linearizable systems
 
 Single system
+
 - Single node holding all the data
 - No replication, no fault tolerance
 
@@ -84,16 +88,17 @@ Single system
 # How to implement linearizable systems
 
 Replicated approaches
-  - Single leader replication: potentially linearizabile if:
-    - All the writes go through the leader
-    - Reads are served from the leader or synchronously updated replicas
-  - Multi leader replication: generally not linearizable
-    - Concurrent writes on different leaders require conflict resolution
-    - No global time ordering
-  - Leaderless replication: usually not serializable
-    - Writes go to multiple nodes independently
-    - Conflict are resolved after the fact
-    - Quorum reads/writes are not sufficient
+
+- Single leader replication: potentially linearizabile if:
+  - All the writes go through the leader
+  - Reads are served from the leader or synchronously updated replicas
+- Multi leader replication: generally not linearizable
+  - Concurrent writes on different leaders require conflict resolution
+  - No global time ordering
+- Leaderless replication: usually not serializable
+  - Writes go to multiple nodes independently
+  - Conflict are resolved after the fact
+  - Quorum reads/writes are not sufficient
 
 ---
 
@@ -124,13 +129,16 @@ Not guaranteed by quorum: all replicas are updated before reads.
 ---
 
 ### Cap Theorem
+
 You can't prevent network partitions
 
 During the partition, if both sides accept writes:
+
 - Availability stays high
 - Consistency can diverge (AP)
 
 If you block one side or reject requests:
+
 - Consistency preserved (CP)
 - Availability reduced
 
@@ -141,15 +149,18 @@ If you block one side or reject requests:
 Correct behavior often depends on ordering.
 
 Without ordering:
+
 - Replies before requests
 - Deletes before creates
 - Inconsistent histories
 
 Total order: All operation al globally ordered
+
 - Every node agree on the same sequence
 - Enables linearizability
 
 Causal order (partial order): Effects are seen after their causes
+
 - Concurrent independent operations may appear in different orders.
 - Much cheaper to implement, but weaker guarantees
 - Enables causal consistency (ie:messaging app)
@@ -160,11 +171,14 @@ Causal order (partial order): Effects are seen after their causes
 
 Need to track "happened-before" relationship
 
+Easier with single-leader, but then when you have multiple or no leaders how to you order?
+
 Naive solutions:
+
 - Physical clocks
 - Separate counters per node
 - Preallocated sequence ranges
-All of these are better than sharing a single counter on a single leader, but have issues with causality
+  All of these are better than sharing a single counter on a single leader, but have issues with causality
 
 ---
 
@@ -183,6 +197,7 @@ Rules:
 Tie-break using node ID.
 
 Produces a total order, but
+
 - total order != causal consistency, as we arbitrary pick what came first in case of conflicts
 - cannot rely just on having a total order "eventually" for things like username clashes (clients needs a response)
 
@@ -457,7 +472,6 @@ A node will vote in favor of a proposal only if it is not aware of any other lea
 </v-clicks>
 
 ---
-
 
 <video class="w-100 rounded-lg mx-auto my-auto" autoplay muted loop playsinline>
   <source src="../assets/chapter09/end.mp4" type="video/mp4" />
