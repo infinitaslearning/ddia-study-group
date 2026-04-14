@@ -154,3 +154,19 @@ src: ./pages/chapter-8-discussion.md
 ---
 
 <!-- Chapter 8 End -->
+
+# DDIA Study Group
+
+Chapter 10
+
+## Batch Processing
+
+---
+src: ./pages/chapter-10.md
+---
+
+---
+src: ./pages/chapter-10-discussion.md
+---
+
+<!-- Chapter 10 End -->
