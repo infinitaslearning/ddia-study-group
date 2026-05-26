@@ -170,3 +170,21 @@ src: ./pages/chapter-10-discussion.md
 ---
 
 <!-- Chapter 10 End -->
+
+<!-- Chapter 12 Start -->
+---
+class: text-center
+layout: cover
+---
+
+# DDIA Study Group
+
+Chapter 12
+
+## The Future of Data Systems
+
+---
+src: ./pages/chapter-12.md
+---
+<!-- Chapter 12 End -->
+
